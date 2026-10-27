@@ -12,7 +12,7 @@ Maintainers assess reports against the current code and coordinate disclosure af
 
 ## Deployment responsibilities
 
-Follow the [configuration and security guide](docs/configuration.md) and the [release scope](release-R1.md). Keep production signing keys and service credentials outside source control; use HTTPS and the same-origin session/CSRF configuration. Development identity headers and synthetic adapters are for local testing. Optional integrations remain unavailable until their documented runtime prerequisites are satisfied.
+Follow the [configuration and security guide](docs/configuration.md) and the [deployment guide](docs/deployment.md). Keep production signing keys and service credentials outside source control; use HTTPS and the same-origin session/CSRF configuration. Development identity headers and synthetic adapters are for local testing. Optional integrations remain unavailable until their documented runtime prerequisites are satisfied.
 
 A source scan or passing test suite does not establish that a deployment is secure. Before publishing a repository, maintainers must also review Git history and release assets for secrets and private data, enable a private reporting channel on the hosting service, and confirm the contact route works. Exposed credentials must be revoked and replaced; removing them from the current checkout is insufficient.
 

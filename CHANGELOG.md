@@ -20,8 +20,8 @@ User-visible changes are recorded here. A section in this file is not proof that
 
 - Add contributor guidance, private security-reporting instructions, and issue/pull-request templates.
 - Document the two-repository local startup and first-installation password flow in both README languages, with a dedicated production deployment guide.
-- Remove legacy guidance that treated User source deletion as a supported CRM setup step.
+- Remove internal batch plans, historical acceptance records, and the obsolete source-deletion script; consolidate maintained integration contracts into feature guides.
 
 ## 1.0.0 baseline
 
-The source declares Maven version `1.0.0`. Its frozen scope, deployment requirements, and exclusions are documented in [release-R1.md](release-R1.md); historical verification is recorded in [R1 acceptance](docs/acceptance/R1.md). Re-run the release gate for the actual revision being distributed. No publication date is asserted here.
+The source declares Maven version `1.0.0`. Current capabilities and integration prerequisites are documented in the [README](README.en.md), [configuration guide](docs/configuration.md), and [deployment guide](docs/deployment.md). Run the release gate for the actual revision being distributed and record its test results. No publication date is asserted here.

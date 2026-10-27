@@ -69,7 +69,7 @@ Docker 不可用时数据库测试会跳过；完整验证方式见[测试指南
 | [开发指南](docs/usage-guide.md) | 新增用例、接口与数据库迁移 |
 | [测试指南](docs/test-guide.md) | 测试分层与验证命令 |
 
-[变更记录](CHANGELOG.md) · [R1 / 1.0.0 发布范围](release-R1.md) · [完整文档索引](llms.txt)
+[变更记录](CHANGELOG.md) · [1.0.0 部署与发布](docs/deployment.md) · [完整文档索引](llms.txt)
 
 ## 参与贡献
 

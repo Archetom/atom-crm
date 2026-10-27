@@ -5,7 +5,7 @@ Java 25 / Spring Boot 4.1 CRM. Complete and verify changes within these boundari
 ## Execution and context
 
 - Finish authorized, reversible work without routine approval. Ask only when a missing decision blocks correctness or scope; continue independent work while waiting.
-- Preserve unrelated work; reuse nearby code/tests. `clean.sh` / `make clean-sample` deletes source: only use for explicit sample removal.
+- Preserve unrelated work; reuse nearby code/tests.
 - Read gitignored root `AGENTS.local.md` explicitly if present. Check applicable `AGENTS.md` / `AGENTS.override.md` along edited paths.
 - Use `rg` for contracts/callers/tests; read relevant sections. Resolve stale docs against code/tests without weakening invariants.
 - Delegate bounded independent work when useful; assign distinct files and review results.

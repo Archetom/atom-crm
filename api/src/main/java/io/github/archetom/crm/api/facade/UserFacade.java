@@ -7,7 +7,7 @@ import io.github.archetom.crm.api.dto.response.UserPageResponse;
 import io.github.archetom.crm.api.dto.response.UserResponse;
 import io.github.archetom.common.result.Result;
 
-/** Public facade contract for the bundled User example. */
+/** Public facade contract for tenant-scoped user management. */
 public interface UserFacade {
 
     /** Create a user inside the caller's tenant. */

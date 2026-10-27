@@ -33,12 +33,12 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-/** HTTP adapter for the bundled tenant-scoped User example. */
+/** HTTP adapter for tenant-scoped user management. */
 @Slf4j
 @RestController
 @RequestMapping("/api/v1/users")
 @RequiredArgsConstructor
-@Tag(name = "Users", description = "Tenant-scoped user lifecycle example")
+@Tag(name = "Users", description = "Tenant-scoped user lifecycle")
 public class UserController {
 
     private final UserFacade userFacade;
