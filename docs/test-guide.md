@@ -34,6 +34,8 @@ CI sets `ATOM_TEST_FORKS=2` to run the `start` module in two reused Surefire JVM
 
 Migration upgrade tests share a separate MySQL server within each JVM. Every scenario creates a fresh schema and schema-scoped user, runs its original Flyway upgrade sequence, then drops that schema and user. This avoids repeatedly booting MySQL while preserving independent data and migration history. Testcontainers removes the servers when the JVM exits; containers and database contents are never reused across builds.
 
+Both test servers put their disposable MySQL data directories on `tmpfs`, capped at 1 GiB per server, to avoid host-disk flush costs. MySQL transaction, locking and constraint settings remain unchanged. Allow enough Docker memory for these mounts as well as the MySQL processes; application and production storage configuration is unaffected.
+
 The report verifier uses the existing JDK 25 source launcher and needs no additional runtime. Its fixture self-tests cover missing/empty reports, partial and complete skips, failures, parameterized/dynamic and nested cases, and malformed or unsafe XML:
 
 ```bash

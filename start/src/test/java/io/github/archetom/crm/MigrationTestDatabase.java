@@ -8,6 +8,7 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.time.Duration;
+import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -131,6 +132,7 @@ final class MigrationTestDatabase implements AutoCloseable {
                     .withPassword(UUID.randomUUID().toString().replace("-", ""))
                     .withUrlParam("useSSL", "false")
                     .withUrlParam("allowPublicKeyRetrieval", "true")
+                    .withTmpFs(Map.of("/var/lib/mysql", "rw,size=1g"))
                     .withStartupTimeout(Duration.ofMinutes(2));
             mysql.start();
             return mysql;
