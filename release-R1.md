@@ -79,7 +79,7 @@ R1 不纳入 B32b 或任何尚未冻结的后续批次，也不预占：
 
 ## 5. 发布门禁
 
-R1 候选必须在 JDK 25、Maven Wrapper 3.9.16 和可用 Docker 环境中通过：
+R1 候选必须在 JDK 25、仓库内固定版本的 Maven Wrapper 和可用 Docker 环境中通过：
 
 ```bash
 make release-verify
