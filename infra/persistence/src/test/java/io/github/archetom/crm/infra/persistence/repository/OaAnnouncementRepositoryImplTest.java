@@ -1,5 +1,6 @@
 package io.github.archetom.crm.infra.persistence.repository;
 
+import com.baomidou.mybatisplus.core.MybatisConfiguration;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import io.github.archetom.crm.domain.model.OaAnnouncementInboxQuery;
 import io.github.archetom.crm.domain.model.OaAnnouncementQuery;
@@ -16,6 +17,7 @@ import io.github.archetom.crm.infra.persistence.mysql.po.OaAnnouncementAudienceD
 import io.github.archetom.crm.infra.persistence.mysql.po.OaAnnouncementAudienceMemberPO;
 import io.github.archetom.crm.infra.persistence.mysql.po.OaAnnouncementPO;
 import io.github.archetom.crm.infra.persistence.mysql.po.OaAnnouncementReadReceiptPO;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -42,6 +44,18 @@ class OaAnnouncementRepositoryImplTest {
     private MapperCalls memberCalls;
     private MapperCalls receiptCalls;
     private OaAnnouncementRepositoryImpl repository;
+
+    @BeforeAll
+    static void initializeMapperMetadata() {
+        // The call-recording proxies below bypass MyBatis startup. Register the actual mappers
+        // so lambda wrappers have the same annotation-derived table/column metadata as production.
+        MybatisConfiguration configuration = new MybatisConfiguration();
+        configuration.addMapper(OaAnnouncementMapper.class);
+        configuration.addMapper(OaAnnouncementAudienceDepartmentMapper.class);
+        configuration.addMapper(OaAnnouncementAudienceMemberMapper.class);
+        configuration.addMapper(OaAnnouncementRecipientMapper.class);
+        configuration.addMapper(OaAnnouncementReadReceiptMapper.class);
+    }
 
     @BeforeEach
     void setUp() {
