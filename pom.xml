@@ -66,8 +66,8 @@
         <archunit.version>1.5.1</archunit.version>
 
         <!-- SpringDoc -->
-        <springdoc.version>3.0.3</springdoc.version>
-        <swagger.annotations.version>2.2.47</swagger.annotations.version>
+        <springdoc.version>3.1.1</springdoc.version>
+        <swagger.annotations.version>2.2.55</swagger.annotations.version>
     </properties>
 
     <!-- The root POM owns dependency versions; each module declares what it uses directly. -->
