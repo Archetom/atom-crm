@@ -36,6 +36,8 @@ Migration upgrade tests share a separate MySQL server within each JVM. Every sce
 
 Both test servers put their disposable MySQL data directories on `tmpfs`, capped at 1 GiB per server, to avoid host-disk flush costs. MySQL transaction, locking and constraint settings remain unchanged. Allow enough Docker memory for these mounts as well as the MySQL processes; application and production storage configuration is unaffected.
 
+The Maven launcher uses a 4 MiB thread stack from `.mvn/jvm.config` to give the in-process Java compiler headroom after a `StackOverflowError` observed while compiling the REST module in CI. This setting does not change the deployed application's JVM options.
+
 The report verifier uses the existing JDK 25 source launcher and needs no additional runtime. Its fixture self-tests cover missing/empty reports, partial and complete skips, failures, parameterized/dynamic and nested cases, and malformed or unsafe XML:
 
 ```bash
