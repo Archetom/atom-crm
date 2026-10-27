@@ -37,11 +37,11 @@ jobs:
           docker info --format '{{.ServerVersion}}'
           docker pull mysql:9.7.1
           docker pull testcontainers/ryuk:0.14.0
-      - name: Run R1 release verification
+      - name: Run release verification
         env:
           CI: "true"
           EXPECTED_VERSION: "1.0.0"
-        run: sh scripts/release-r1-verify.sh
+        run: sh scripts/release-verify.sh
       - name: Build runtime image from verified artifact
         run: docker build --tag atom-crm:ci .
       - name: Preserve test reports

@@ -22,8 +22,6 @@ Community support has no guaranteed response time. Never post credentials, sessi
 4. Add regression coverage for changed behavior. Preserve tenant isolation, authorization, optimistic locking, transaction boundaries, and post-commit effects. Add Flyway migrations instead of editing applied migrations.
 5. Update the API/configuration documentation when public behavior changes. For an HTTP contract change, coordinate the frontend OpenAPI snapshot, generated types, and caller tests; do not edit generated frontend types by hand.
 
-`clean.sh` and `make clean-sample` delete source used by the CRM. Do not run them as setup or routine cleanup.
-
 ## Verify
 
 Run commands from the backend repository root. See the [test guide](docs/test-guide.md) for test selection and database evidence.

@@ -11,7 +11,9 @@ make release-verify
 docker build -t atom-crm:local .
 ```
 
-没有 Make 时用 `sh scripts/release-r1-verify.sh`。发布门禁执行完整 `clean install`，并检查每个数据库测试类均实际运行。可执行 JAR 为 `start/target/atom-crm-start.jar`。Dockerfile 只复制该 JAR，运行用户为 `10001:10001`；镜像默认激活 `prod`，不会将源码、`.env`、测试配置或本地配置目录复制进去。镜像构建不会替代测试。
+没有 Make 时用 `sh scripts/release-verify.sh`。发布门禁执行完整 `clean install`，并检查每个数据库测试类均实际运行。可执行 JAR 为 `start/target/atom-crm-start.jar`。Dockerfile 只复制该 JAR，运行用户为 `10001:10001`；镜像默认激活 `prod`，不会将源码、`.env`、测试配置或本地配置目录复制进去。镜像构建不会替代测试。
+
+门禁同时检查发布版本一致且不含 `SNAPSHOT`、工作区差异无空白错误，并要求 Docker 可用。任何已发现的数据库测试缺少报告、未执行、跳过、失败或出错都会使发布失败。成功执行跳过数据库的快速测试不能替代发布门禁；完整说明见 [测试指南](test-guide.md#commands)。
 
 前端在其仓库内使用 `package.json` 指定的 Node/pnpm、`pnpm install --frozen-lockfile`、`pnpm build` 和 `pnpm bundle:check`，再按该仓库 Dockerfile 构建静态站点镜像。前端 Nginx 的 `ATOM_CRM_API_UPSTREAM` 必须指向同一容器网络中的后端，例如 `http://atom-crm:8080`。同源 `/api/` 代理与 SPA 路由回退由前端配置提供。
 
@@ -45,9 +47,19 @@ Flyway 是唯一建表和升级机制，保留迁移校验与禁用 clean；不�
 
 Redis、电话、企业数据源、文件扫描/存储、后台调度和工作通知适配器继续遵守各自默认关闭及 readiness 契约。SMTP 欢迎邮件的可用性不代表这些能力已配置完成。
 
+## 能力与兼容性边界
+
+当前交付包含组织与租户授权、字段与视图定制、客户/联系人/线索/商机、产品、合同/发票/回款、工作任务、报表、营销表单和 OA，以及各接口明确支持的受限 CSV 导入导出。每项能力仍受当前成员、业务权限、记录范围和字段策略限制；导航可见性不能代替授权。
+
+电话连接器已提供注册、认证和持久化接入基础，尚未提供生产外呼或录音播放服务。企业数据已提供受控查询与显式采纳边界，但真实数据源、权利策略和当前证据必须单独满足准入。附件已提供安全本地存储和扫描链路，生产默认关闭；S3 生产适配器、公共分享、预览和 OCR 不属于当前交付。详见 [连接器](connector-integration.md)、[企业数据](enterprise-data.md) 和 [附件](file-storage.md)。
+
+受限 CSV 接口不代表支持任意 Excel 或无限量异步导出。调度仅接受实现中列出的固定工作种类，不执行租户提供的 cron、脚本或通用 Webhook。商机阶段与审批工作流保留各自的语义，不会隐式同步。可选适配器不可用时，应保持相关能力关闭，不能降低其他 CRM 功能的租户或授权检查。
+
+`/api/v1` 是当前 1.x 公共接口命名空间。会破坏现有请求、响应或持久化语义的变更必须设计明确的版本边界与迁移路径，并验证前后端版本对；不能仅保留 URL 就声称兼容。
+
 ## 发布仓库
 
-源码仓库为 [atom-crm 后端](https://github.com/Archetom/atom-crm) 和 [atom-crm-web 前端](https://github.com/Archetom/atom-crm-web)。公开历史从本次发布快照的新初始提交开始，不包含此前开发过程中的 Git 提交；旧 Git 元数据仅保留在本地备份。后续变更通过各自的 `main` 分支与经过验证的前后端版本对交付。
+源码仓库为 [atom-crm 后端](https://github.com/Archetom/atom-crm) 和 [atom-crm-web 前端](https://github.com/Archetom/atom-crm-web)。变更通过各自的 `main` 分支与经过验证的前后端版本对交付。
 
 后续发布前由维护者确认版本对、启用私人漏洞报告入口，检查完整 Git 历史中的凭据与内部资料，并确认第三方依赖和素材的分发要求。发生过泄漏的密钥需要撤销或轮换；删除当前文件不能清除历史。
 

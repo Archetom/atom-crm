@@ -7,7 +7,7 @@ import io.github.archetom.crm.application.vo.UserVO;
 import io.github.archetom.common.result.Pager;
 import io.github.archetom.common.result.Result;
 
-/** Application use-case boundary for the bundled User example. */
+/** Application use-case boundary for tenant-scoped user management. */
 public interface UserService {
 
     /** Create a user inside the caller's tenant. */
