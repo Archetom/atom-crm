@@ -32,10 +32,7 @@ import org.springframework.dao.DataAccessException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.datasource.DriverManagerDataSource;
-import org.testcontainers.mysql.MySQLContainer;
-import org.testcontainers.utility.DockerImageName;
 
-import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -153,13 +150,7 @@ class PersistenceIntegrationTest extends BaseIntegrationTest {
 
     @Test
     void opportunityPipelineMigrationRejectsInvalidHistoryBeforeDdlAndRetriesAfterRepair() {
-        try (MySQLContainer upgradeDatabase = new MySQLContainer(
-                DockerImageName.parse("mysql:9.7.1"))
-                .withDatabaseName("opportunity_pipeline_upgrade_test")
-                .withUsername("upgrade_user")
-                .withPassword("upgrade_password")
-                .withStartupTimeout(Duration.ofMinutes(2))) {
-            upgradeDatabase.start();
+        try (MigrationTestDatabase upgradeDatabase = MigrationTestDatabase.create()) {
             migrationFlyway(upgradeDatabase, "84").migrate();
             JdbcTemplate jdbc = upgradeJdbc(upgradeDatabase);
             seedLegacyOpportunity(jdbc, "bad pipeline code", "qualification");
@@ -208,13 +199,7 @@ class PersistenceIntegrationTest extends BaseIntegrationTest {
 
     @Test
     void opportunityPipelineMigrationPreservesCaseVariantsAndExistingSnapshots() {
-        try (MySQLContainer upgradeDatabase = new MySQLContainer(
-                DockerImageName.parse("mysql:9.7.1"))
-                .withDatabaseName("opportunity_pipeline_case_upgrade_test")
-                .withUsername("upgrade_user")
-                .withPassword("upgrade_password")
-                .withStartupTimeout(Duration.ofMinutes(2))) {
-            upgradeDatabase.start();
+        try (MigrationTestDatabase upgradeDatabase = MigrationTestDatabase.create()) {
             migrationFlyway(upgradeDatabase, "84").migrate();
             JdbcTemplate jdbc = upgradeJdbc(upgradeDatabase);
             seedV84PipelineUpgradeFixtures(jdbc);
@@ -280,13 +265,7 @@ class PersistenceIntegrationTest extends BaseIntegrationTest {
 
     @Test
     void customerTagKeyMigrationBackfillsNfkcKeysAndCollapsesAliases() {
-        try (MySQLContainer upgradeDatabase = new MySQLContainer(
-                DockerImageName.parse("mysql:9.7.1"))
-                .withDatabaseName("upgrade_test")
-                .withUsername("upgrade_user")
-                .withPassword("upgrade_password")
-                .withStartupTimeout(Duration.ofMinutes(2))) {
-            upgradeDatabase.start();
+        try (MigrationTestDatabase upgradeDatabase = MigrationTestDatabase.create()) {
             Flyway.configure()
                     .dataSource(upgradeDatabase.getJdbcUrl(), upgradeDatabase.getUsername(),
                             upgradeDatabase.getPassword())
@@ -327,13 +306,7 @@ class PersistenceIntegrationTest extends BaseIntegrationTest {
 
     @Test
     void contactTagKeyMigrationBackfillsNfkcKeysAndCollapsesAliases() {
-        try (MySQLContainer upgradeDatabase = new MySQLContainer(
-                DockerImageName.parse("mysql:9.7.1"))
-                .withDatabaseName("contact_tag_upgrade_test")
-                .withUsername("upgrade_user")
-                .withPassword("upgrade_password")
-                .withStartupTimeout(Duration.ofMinutes(2))) {
-            upgradeDatabase.start();
+        try (MigrationTestDatabase upgradeDatabase = MigrationTestDatabase.create()) {
             migrationFlyway(upgradeDatabase, "18").migrate();
 
             JdbcTemplate upgradeJdbc = upgradeJdbc(upgradeDatabase);
@@ -363,13 +336,7 @@ class PersistenceIntegrationTest extends BaseIntegrationTest {
 
     @Test
     void contactTagKeyMigrationResumesAfterRepairingFailedBackfill() {
-        try (MySQLContainer upgradeDatabase = new MySQLContainer(
-                DockerImageName.parse("mysql:9.7.1"))
-                .withDatabaseName("contact_tag_retry_test")
-                .withUsername("upgrade_user")
-                .withPassword("upgrade_password")
-                .withStartupTimeout(Duration.ofMinutes(2))) {
-            upgradeDatabase.start();
+        try (MigrationTestDatabase upgradeDatabase = MigrationTestDatabase.create()) {
             migrationFlyway(upgradeDatabase, "18").migrate();
 
             JdbcTemplate upgradeJdbc = upgradeJdbc(upgradeDatabase);
@@ -416,13 +383,7 @@ class PersistenceIntegrationTest extends BaseIntegrationTest {
 
     @Test
     void leadTagMigrationAcceptsNoChangeUpdatesWithAffectedRowsSemantics() {
-        try (MySQLContainer upgradeDatabase = new MySQLContainer(
-                DockerImageName.parse("mysql:9.7.1"))
-                .withDatabaseName("lead_tag_affected_rows_test")
-                .withUsername("upgrade_user")
-                .withPassword("upgrade_password")
-                .withStartupTimeout(Duration.ofMinutes(2))) {
-            upgradeDatabase.start();
+        try (MigrationTestDatabase upgradeDatabase = MigrationTestDatabase.create()) {
             String affectedRowsUrl = upgradeDatabase.getJdbcUrl()
                     + (upgradeDatabase.getJdbcUrl().contains("?") ? "&" : "?")
                     + "useAffectedRows=true";
@@ -458,13 +419,7 @@ class PersistenceIntegrationTest extends BaseIntegrationTest {
 
     @Test
     void marketingFormSubmissionMigrationUpgradesV48ToV50WithTenantConstraints() {
-        try (MySQLContainer upgradeDatabase = new MySQLContainer(
-                DockerImageName.parse("mysql:9.7.1"))
-                .withDatabaseName("marketing_form_submission_upgrade_test")
-                .withUsername("upgrade_user")
-                .withPassword("upgrade_password")
-                .withStartupTimeout(Duration.ofMinutes(2))) {
-            upgradeDatabase.start();
+        try (MigrationTestDatabase upgradeDatabase = MigrationTestDatabase.create()) {
             migrationFlyway(upgradeDatabase, "48").migrate();
             JdbcTemplate jdbc = upgradeJdbc(upgradeDatabase);
             jdbc.update("INSERT INTO organization_member_profile (actor_id, display_name) "
@@ -515,13 +470,7 @@ class PersistenceIntegrationTest extends BaseIntegrationTest {
 
     @Test
     void workRecurrenceMigrationLeavesV1AutomationFenceForReconciliation() {
-        try (MySQLContainer upgradeDatabase = new MySQLContainer(
-                DockerImageName.parse("mysql:9.7.1"))
-                .withDatabaseName("work_recurrence_upgrade_test")
-                .withUsername("upgrade_user")
-                .withPassword("upgrade_password")
-                .withStartupTimeout(Duration.ofMinutes(2))) {
-            upgradeDatabase.start();
+        try (MigrationTestDatabase upgradeDatabase = MigrationTestDatabase.create()) {
             migrationFlyway(upgradeDatabase, "66").migrate();
             JdbcTemplate jdbc = upgradeJdbc(upgradeDatabase);
             jdbc.update("INSERT INTO organization_member_profile (actor_id, display_name) VALUES (7, 'Owner')");
@@ -578,7 +527,7 @@ class PersistenceIntegrationTest extends BaseIntegrationTest {
         assertDoesNotThrow(() -> userRepository.save(tenantB, userB));
     }
 
-    private Flyway migrationFlyway(MySQLContainer database, String target) {
+    private Flyway migrationFlyway(MigrationTestDatabase database, String target) {
         var configuration = Flyway.configure()
                 .dataSource(database.getJdbcUrl(), database.getUsername(), database.getPassword())
                 .locations("classpath:db/migration");
@@ -588,20 +537,14 @@ class PersistenceIntegrationTest extends BaseIntegrationTest {
         return configuration.load();
     }
 
-    private JdbcTemplate upgradeJdbc(MySQLContainer database) {
+    private JdbcTemplate upgradeJdbc(MigrationTestDatabase database) {
         return new JdbcTemplate(new DriverManagerDataSource(
                 database.getJdbcUrl(), database.getUsername(), database.getPassword()));
     }
 
     @Test
     void oaFormMigrationBackfillsExistingTenantFieldCatalog() {
-        try (MySQLContainer upgradeDatabase = new MySQLContainer(
-                DockerImageName.parse("mysql:9.7.1"))
-                .withDatabaseName("oa_form_upgrade_test")
-                .withUsername("upgrade_user")
-                .withPassword("upgrade_password")
-                .withStartupTimeout(Duration.ofMinutes(2))) {
-            upgradeDatabase.start();
+        try (MigrationTestDatabase upgradeDatabase = MigrationTestDatabase.create()) {
             migrationFlyway(upgradeDatabase, "49").migrate();
             JdbcTemplate jdbc = upgradeJdbc(upgradeDatabase);
             jdbc.update("INSERT INTO organization_member_profile (actor_id, display_name) "
