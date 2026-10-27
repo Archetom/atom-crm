@@ -69,7 +69,7 @@ Database tests are skipped when Docker is unavailable. See the [testing guide](d
 | [Development](docs/usage-guide.md) | Adding use cases, endpoints, and migrations |
 | [Testing](docs/test-guide.md) | Test layers and verification commands |
 
-[Changelog](CHANGELOG.md) · [R1 release scope](release-R1.md) · [Full documentation index](llms.txt)
+[Changelog](CHANGELOG.md) · [R1 / 1.0.0 release scope](release-R1.md) · [Full documentation index](llms.txt)
 
 ## Contributing
 
