@@ -1,0 +1,269 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="io.github.archetom.crm.infra.persistence.mysql.mapper.CustomerMapper">
+
+    <resultMap id="CustomerDistanceResultMap"
+               type="io.github.archetom.crm.infra.persistence.mysql.po.CustomerDistancePO">
+        <id property="id" column="id"/>
+        <result property="tenantId" column="tenant_id"/>
+        <result property="ownerActorId" column="owner_actor_id"/>
+        <result property="parentCustomerId" column="parent_customer_id"/>
+        <result property="name" column="name"/>
+        <result property="phoneNumber" column="phone_number"/>
+        <result property="telephone" column="telephone"/>
+        <result property="email" column="email"/>
+        <result property="website" column="website"/>
+        <result property="description" column="description"/>
+        <result property="status" column="status"/>
+        <result property="locked" column="is_locked"/>
+        <result property="dealStatus" column="deal_status"/>
+        <result property="dealTime" column="deal_time"/>
+        <result property="version" column="version"/>
+        <result property="createdTime" column="created_time"/>
+        <result property="updatedTime" column="updated_time"/>
+        <result property="distanceMeters" column="distance_meters"/>
+    </resultMap>
+
+    <sql id="VisibilityPredicate">
+        <if test="dataScope != 'TENANT'">
+            AND (
+                <choose>
+                    <when test="dataScope == 'SELF'">
+                        c.owner_actor_id = #{actorId}
+                    </when>
+                    <otherwise>
+                        EXISTS (
+                            SELECT 1
+                            FROM organization_membership owner_membership
+                            WHERE owner_membership.tenant_id = c.tenant_id
+                              AND owner_membership.actor_id = c.owner_actor_id
+                              AND owner_membership.status = 'ACTIVE'
+                              AND owner_membership.department_id IN
+                              <foreach collection="departmentIds" item="departmentId"
+                                       open="(" separator="," close=")">
+                                  #{departmentId}
+                              </foreach>
+                        )
+                    </otherwise>
+                </choose>
+                <if test="accessMode != 'OWNER_SCOPE'">
+                    OR EXISTS (
+                        SELECT 1
+                        FROM crm_customer_collaborator collaborator
+                        WHERE collaborator.tenant_id = c.tenant_id
+                          AND collaborator.customer_id = c.id
+                          AND collaborator.actor_id = #{actorId}
+                        <if test="accessMode == 'WRITE'">
+                            AND collaborator.access_level = 'WRITE'
+                        </if>
+                    )
+                </if>
+            )
+        </if>
+    </sql>
+
+    <select id="selectHierarchyPath" resultType="java.lang.Long">
+        WITH RECURSIVE ancestor_ids (tenant_id, id, parent_customer_id, depth) AS (
+            SELECT customer.tenant_id, customer.id, customer.parent_customer_id, 0
+            FROM crm_customer customer
+            WHERE customer.tenant_id = #{tenantId}
+              AND customer.id = #{customerId}
+              AND customer.status &lt;&gt; 'DELETED'
+            UNION ALL
+            SELECT parent.tenant_id, parent.id, parent.parent_customer_id, child.depth + 1
+            FROM ancestor_ids child
+            JOIN crm_customer parent
+              ON parent.tenant_id = child.tenant_id
+             AND parent.id = child.parent_customer_id
+             AND parent.status &lt;&gt; 'DELETED'
+            WHERE child.depth &lt; #{depthLimit}
+        )
+        SELECT id
+        FROM ancestor_ids
+        ORDER BY depth ASC
+    </select>
+
+    <select id="selectHierarchySubtreeStats"
+            resultType="io.github.archetom.crm.infra.persistence.mysql.po.CustomerHierarchyStatsPO">
+        WITH RECURSIVE descendant_ids (tenant_id, id, depth) AS (
+            SELECT customer.tenant_id, customer.id, 0
+            FROM crm_customer customer
+            WHERE customer.tenant_id = #{tenantId}
+              AND customer.id = #{customerId}
+              AND customer.status &lt;&gt; 'DELETED'
+            UNION ALL
+            SELECT child.tenant_id, child.id, parent.depth + 1
+            FROM descendant_ids parent
+            JOIN crm_customer child
+              ON child.tenant_id = parent.tenant_id
+             AND child.parent_customer_id = parent.id
+             AND child.status &lt;&gt; 'DELETED'
+            WHERE parent.depth &lt; #{depthLimit}
+            LIMIT #{nodeLimit}
+        )
+        SELECT COUNT(*) AS node_count, COALESCE(MAX(depth), 0) AS height
+        FROM descendant_ids
+    </select>
+
+    <select id="selectVisibleDescendantIds" resultType="java.lang.Long">
+        WITH RECURSIVE descendant_ids (tenant_id, id, depth) AS (
+            SELECT root.tenant_id, root.id, 0
+            FROM crm_customer root
+            WHERE root.tenant_id = #{tenantId}
+              AND root.id = #{customerId}
+              AND root.status &lt;&gt; 'DELETED'
+            UNION ALL
+            SELECT child.tenant_id, child.id, parent.depth + 1
+            FROM crm_customer child
+            JOIN descendant_ids parent
+              ON parent.tenant_id = child.tenant_id
+             AND parent.id = child.parent_customer_id
+            WHERE child.tenant_id = #{tenantId}
+              AND child.status &lt;&gt; 'DELETED'
+              AND parent.depth &lt; #{maxDepth}
+            LIMIT #{traversalLimit}
+        )
+        SELECT c.id
+        FROM crm_customer c
+        JOIN descendant_ids descendant
+          ON descendant.tenant_id = c.tenant_id
+         AND descendant.id = c.id
+        WHERE c.tenant_id = #{tenantId}
+          AND c.status = 'ACTIVE'
+          AND descendant.depth &gt; 0
+          <include refid="VisibilityPredicate"/>
+        ORDER BY c.id ASC
+        LIMIT #{resultLimit}
+    </select>
+
+    <select id="selectVisibleAncestorIds" resultType="java.lang.Long">
+        WITH RECURSIVE ancestor_ids (tenant_id, id, parent_customer_id, depth) AS (
+            SELECT parent.tenant_id, parent.id, parent.parent_customer_id, 1
+            FROM crm_customer child
+            JOIN crm_customer parent
+              ON parent.tenant_id = child.tenant_id
+             AND parent.id = child.parent_customer_id
+             AND parent.status &lt;&gt; 'DELETED'
+            WHERE child.tenant_id = #{tenantId}
+              AND child.id = #{customerId}
+            UNION ALL
+            SELECT parent.tenant_id, parent.id, parent.parent_customer_id, ancestor.depth + 1
+            FROM ancestor_ids ancestor
+            JOIN crm_customer parent
+              ON parent.tenant_id = ancestor.tenant_id
+             AND parent.id = ancestor.parent_customer_id
+             AND parent.status &lt;&gt; 'DELETED'
+            WHERE ancestor.depth &lt; #{limit}
+        )
+        SELECT c.id
+        FROM crm_customer c
+        JOIN ancestor_ids ancestor
+          ON ancestor.tenant_id = c.tenant_id
+         AND ancestor.id = c.id
+        WHERE c.tenant_id = #{tenantId}
+          AND c.status = 'ACTIVE'
+          <include refid="VisibilityPredicate"/>
+        ORDER BY c.id ASC
+        LIMIT #{limit}
+    </select>
+
+    <select id="selectVisibleTags" resultType="java.lang.String">
+        SELECT MIN(tag.tag_name) AS tag_name
+        FROM crm_customer_tag tag
+        JOIN crm_customer c
+          ON c.tenant_id = tag.tenant_id
+         AND c.id = tag.customer_id
+        WHERE c.tenant_id = #{tenantId}
+          AND c.status = 'ACTIVE'
+          <include refid="VisibilityPredicate"/>
+        GROUP BY tag.tag_key
+        ORDER BY tag.tag_key ASC
+        LIMIT #{limit}
+    </select>
+
+    <select id="selectNearbyPage" resultMap="CustomerDistanceResultMap">
+        SELECT distance_query.*
+        FROM (
+            SELECT c.*,
+                   ROUND(
+                       6371000 * 2 * ASIN(SQRT(
+                           POWER(SIN(RADIANS(address.latitude - #{latitude}) / 2), 2)
+                           + COS(RADIANS(#{latitude})) * COS(RADIANS(address.latitude))
+                           * POWER(SIN(RADIANS(address.longitude - #{longitude}) / 2), 2)
+                       ))
+                   ) AS distance_meters
+            FROM crm_customer c
+            JOIN crm_customer_address address
+              ON address.tenant_id = c.tenant_id
+             AND address.customer_id = c.id
+             AND address.is_primary = 1
+             AND address.latitude IS NOT NULL
+             AND address.longitude IS NOT NULL
+             AND address.latitude BETWEEN #{minLatitude} AND #{maxLatitude}
+            <if test="!longitudeUnbounded">
+                <choose>
+                    <when test="crossesAntimeridian">
+             AND (address.longitude &gt;= #{minLongitude}
+                  OR address.longitude &lt;= #{maxLongitude})
+                    </when>
+                    <otherwise>
+             AND address.longitude BETWEEN #{minLongitude} AND #{maxLongitude}
+                    </otherwise>
+                </choose>
+            </if>
+            WHERE c.tenant_id = #{tenantId}
+              AND c.status = 'ACTIVE'
+              <include refid="VisibilityPredicate"/>
+        ) distance_query
+        WHERE distance_query.distance_meters &lt;= #{radiusMeters}
+        ORDER BY distance_query.distance_meters ASC, distance_query.id ASC
+    </select>
+
+    <select id="selectExportRoots"
+            resultType="io.github.archetom.crm.infra.persistence.mysql.po.CustomerExportRootPO">
+        SELECT c.id AS customer_id,
+               c.name,
+               c.phone_number,
+               c.telephone,
+               c.email,
+               c.website,
+               c.description,
+               c.is_locked AS locked,
+               c.deal_status,
+               c.status,
+               c.created_time,
+               c.updated_time
+        FROM crm_customer c
+        WHERE c.tenant_id = #{tenantId}
+          AND c.id IN
+          <foreach collection="customerIds" item="customerId" open="(" separator="," close=")">
+              #{customerId}
+          </foreach>
+        ORDER BY c.id ASC
+    </select>
+
+    <select id="selectExportValues"
+            resultType="io.github.archetom.crm.infra.persistence.mysql.po.CustomerExportValuePO">
+        SELECT field_value.customer_id,
+               field_definition.field_code,
+               field_value.scalar_value
+        FROM crm_customer_field_value field_value
+        JOIN custom_field_definition field_definition
+          ON field_definition.tenant_id = field_value.tenant_id
+         AND field_definition.object_type = field_value.object_type
+         AND field_definition.id = field_value.field_id
+        WHERE field_value.tenant_id = #{tenantId}
+          AND field_value.object_type = 'CUSTOMER'
+          AND field_value.customer_id IN
+          <foreach collection="customerIds" item="customerId" open="(" separator="," close=")">
+              #{customerId}
+          </foreach>
+          AND field_definition.field_code IN
+          <foreach collection="fieldCodes" item="fieldCode" open="(" separator="," close=")">
+              #{fieldCode}
+          </foreach>
+        ORDER BY field_value.customer_id ASC, field_definition.field_code ASC
+    </select>
+</mapper>

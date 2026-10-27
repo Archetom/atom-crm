@@ -1,0 +1,138 @@
+# atom-crm
+
+> Java 25 / Spring Boot 4.1 multi-module CRM; Maven coordinates `io.github.archetom:atom-crm:1.0.0`.
+
+This is a retrieval index, not a full reading checklist. Open the current guide sections relevant to the task, then inspect the implementation and tests with `rg`. Batch plans, designs, spikes, and acceptance records retain historical decisions and evidence; verify their implementation and readiness claims against current code and configuration.
+
+## Current guides and contracts
+
+- [Agent execution conventions](AGENTS.md): task workflow and repository invariants; apply these instructions without adding another full-document reading requirement.
+- [Chinese overview and quick start](README.md): environment, setup, commands, and product overview.
+- [English overview](README.en.md): English setup, commands, and module overview.
+- [Architecture](docs/architecture.md): dependency ownership, request flow, tenancy, transactions, persistence, cache, and events.
+- [Object layering and naming](docs/object-layering.md): boundary types, aggregate reconstruction, and mapping ownership.
+- [Development workflow](docs/usage-guide.md): implementation patterns for use cases, persistence, migrations, and endpoints.
+- [Configuration and security](docs/configuration.md): profiles, environment variables, authentication, storage, and runtime gates.
+- [HTTP API reference](docs/api-reference.md): routes, permissions, input/output contracts, and safe errors.
+- [First installation](docs/api-reference.md#first-installation): one-time tenant-owner setup and installation availability.
+- [Receivable-plan queries](docs/api-reference.md#receivables-and-receivable-plans): owner scenes, advanced filters, summaries, and CSV export.
+- [Dashboard sales brief](docs/api-reference.md#dashboard-sales-brief): permission-aware metrics, funnel, and contact reminders.
+- [Testing guide](docs/test-guide.md): test layers, representative coverage, and change-to-test mapping.
+- [R1 release scope](release-R1.md): 1.0.0 baseline, deployment gates, compatibility, and deferred capabilities.
+
+## Module map
+
+Dependencies point inward: adapters -> application -> domain; `start` composes the runtime.
+
+| Path | Responsibility |
+| --- | --- |
+| `api` | Request/Response and facade contracts; explicit authenticated subjects. |
+| `domain` | Aggregates, value objects, policies, events, and repository ports. |
+| `application` | Use-case orchestration, authorization, transactions, and output ports. |
+| `shared` | Small technical result and error primitives. |
+| `infra/rest` | HTTP transport, authentication, and error mapping. |
+| `infra/facade` | Public facade implementations and API/application mapping. |
+| `infra/persistence` | MyBatis mappings, persistence conversion, Flyway, and cache adapters. |
+| `infra/external`, `infra/security` | External-service and security adapters. |
+| `start` | Composition root and integration tests. |
+| `conf`, `scripts` | Runtime configuration and task-specific verification scripts. |
+
+Find current classes, callers, tests, and migrations with `rg --files` and scoped `rg` searches rather than maintaining duplicate inventories here.
+
+## Verification entry points
+
+- Focused module tests with reactor dependencies: `sh ./mvnw -pl <module> -am test`.
+- Explicit fast suite: `sh ./mvnw test -Datom.test.skip-database-tests=true`.
+- Default suite: `sh ./mvnw test`; MySQL Testcontainers tests run when Docker is available and skip otherwise.
+- Full build: `sh ./mvnw clean install`.
+
+For database, security, transaction, mapper, cache, or event changes, run the default suite with Docker available and check that the relevant database tests actually ran. `CI=true` alone does not force database execution; the gate is Docker availability unless the explicit skip property is true.
+
+## Historical batch plans
+
+Use these to recover scope decisions and batch context, not as an inventory of current behavior.
+
+- [B18 dashboard](batch-B18.md): preferences and fixed sales overview scope.
+- [B19 marketing forms](batch-B19.md): form submission, attribution, and reporting scope.
+- [B20 lightweight OA](batch-B20.md): forms, approval-backed requests, and announcements.
+- [B21 Work tasks](batch-B21.md): task core, collaboration, CRM relations, and worklist integration.
+- [B22 connectors and calls](batch-B22.md): connector security and staged provider-neutral call integration.
+- [B23 enterprise data](batch-B23.md): source contracts, readiness, identities, and Customer adoption.
+- [B24 files and attachments](batch-B24.md): storage, inspection, controlled access, and structured FILE values.
+- [B25 business seams](batch-B25.md): Customer overview and independently authorized source projections.
+- [B26 automation](batch-B26.md): durable schedule/run execution and composition-root wake-ups.
+- [B27 recurring Work](batch-B27.md): recurring tasks, reminders, and notification delivery.
+- [B28 scheduled announcements](batch-B28.md): one-shot publication and optional email delivery.
+- [B29 attachment expansion](batch-B29.md): Product, ReturnVisit, marketing, and OA attachment boundaries.
+- [B30 Customer CSV export](batch-B30.md): bounded, permission-aware Customer export.
+- [B31 Contact CSV export](batch-B31.md): bounded, permission-aware Contact export.
+- [B32 opportunity pipelines](batch-B32.md): tenant pipeline/stage catalogs and lifecycle rules.
+- [B33 Lead CSV export](batch-B33.md): bounded, permission-aware Lead export.
+
+## Design, investigation, and fixture records
+
+These are task-specific references. A design, simulator, or fixture does not by itself establish production readiness.
+
+### B22 connector and call integration
+
+- [B22-R reliability](docs/B22-R-reliability.md): idempotency, durable delivery, ambiguity, reconciliation, and crash contracts.
+- [B22-D sensitive data](batch-B22.md#14-b22-d-敏感数据录音访问与保留设计闭合): encrypted addresses, recording access, retention, and deletion design.
+- [Cloud Webhook spike](docs/spikes/B22-cloud-webhook.md): Twilio callback mapping and authentication investigation.
+- [PBX event-stream spike](docs/spikes/B22-pbx-event-stream.md): Asterisk ARI and FreeSWITCH ESL transport investigation.
+- [B22-S state and topology](docs/spikes/B22-state-and-topology.md): normalized call state, participant legs, and media-proof requirements.
+- [B22-M media transfer](docs/spikes/B22-media-transfer.md): controlled recording streams, ranges, cancellation, and resource limits.
+- [B22-A adapter readiness](docs/B22-A-adapter-readiness.md): per-operation evidence, isolation, and conformance gates.
+- [B22-CW cloud fixture](docs/B22-CW-cloud-callback-fixture.md): composed callback, ordering, media, and readiness scenarios.
+- [B22-CP PBX fixture](docs/B22-CP-pbx-composed-contract.md): reconnect, fencing, topology proof, and isolation scenarios.
+- [B22-PC command fixture](docs/B22-PC-pbx-command-contract.md): command durability, dispatch ambiguity, and provider-effect scenarios.
+- [B22-PD sensitive-data fixture](docs/B22-PD-pbx-sensitive-data-contract.md): encryption, retention, leakage, and destruction scenarios.
+- [B22-PM recording fixture](docs/B22-PM-pbx-media-contract.md): recording streams, ranges, deletion, and crash scenarios.
+
+### B23 enterprise data
+
+- [B23-C commercial-source spike](docs/spikes/B23-commercial-enterprise-data.md): public-document investigation of source mapping, rights, and readiness gaps.
+- [B23-O/1 registry spike](docs/spikes/B23-official-open-registry.md): Companies House and GLEIF identity, policy, and adapter comparison.
+- [B23-O/2 source readiness](docs/B23-O-official-source-readiness.md): source qualification, policy evidence, quotas, and conformance design.
+- [B23-O-L2 durable simulator](docs/B23-O-L2-durable-simulator.md): test-only shared quota/readiness and restart scenarios.
+- [B23-XI registered identities](docs/B23-XI-registered-identity.md): identity normalization, tenant uniqueness, and Customer ownership design.
+- [B23-XP profile and provenance](docs/B23-XP-profile-provenance.md): canonical observations, policy, attribution, and retention design.
+- [B23-XF synthetic fixture](docs/B23-XF-composed-fixture.md): composed synthetic-source mapping, policy, and isolation scenarios.
+- [B23-OC offline contract](docs/B23-OC-official-source-contract.md): official/open adapter contract and synthetic runner boundaries.
+
+### B24 files and attachments
+
+- [B24-I content inspection](docs/B24-I-content-inspection.md): quarantine, inspection evidence, fencing, and failure semantics.
+- [B24-S storage readiness](docs/B24-S-storage-readiness.md): immutable object generations, bounded storage operations, and deletion proof.
+- [B24-A attachment access](docs/B24-A-attachment-access.md): target authorization, parent lifecycle, and attachment cardinality.
+- [B24-X safe-file fixture](docs/B24-X-composed-fixture.md): composed storage, inspection, access, and deletion scenarios.
+- [B24-X/1 model fixture](docs/B24-X-model-fixture.md): test-only executable crash and reconstruction oracle.
+- [B24 implementation boundaries](docs/B24-SPLIT-implementation-boundaries.md): batch ownership, package boundaries, and acceptance gates.
+
+## Historical acceptance evidence
+
+These records describe the checked revision and verification scope; they do not replace checks for the current change.
+
+- [R1 acceptance](docs/acceptance/R1.md): 1.0.0 build, MySQL, security, and release-decision evidence.
+- [B18b/B19b review](docs/acceptance/B18b-B19b.md): dashboard and marketing-reporting review evidence.
+- [B19a review](docs/acceptance/B19a.md): marketing-form security, isolation, concurrency, and rate-limit evidence.
+- [B20a OA forms](docs/acceptance/B20a.md): governed form, field-policy, and migration evidence.
+- [B20b OA requests](docs/acceptance/B20b.md): immutable submission, approval linkage, and visibility evidence.
+- [B20c announcements](docs/acceptance/B20c.md): recipient snapshots, inbox visibility, and receipt evidence.
+- [B21c worklist integration](docs/acceptance/B21c.md): task projection, acknowledgement, and cursor compatibility evidence.
+- [B22a connector control](docs/acceptance/B22a.md): credential, identity, lifecycle, tenant, and admission evidence.
+- [B22b Asterisk transport](docs/acceptance/B22b-asterisk-transport-canary.md): isolated real-PBX transport evidence and remaining runtime gaps.
+- [B22c runtime durability](docs/acceptance/B22c-runtime-reliability-foundation.md): MySQL core inbox and reliability-foundation evidence.
+- [B22d private-adapter oracle](docs/acceptance/B22d-private-adapter-durable-oracle.md): synthetic durable PBX contract evidence.
+- [B22e evidence matrix](docs/acceptance/B22e-evidence-matrix.md): composed transport/core/adapter evidence and readiness limits.
+- [B23a read kernel](docs/acceptance/B23a.md): enterprise-data read authorization, isolation, and source-boundary evidence.
+- [B23-O-L1 GLEIF mapper](docs/acceptance/B23-O-L1.md): synthetic mapper qualification, field stripping, and failure evidence.
+- [B23-RA GLEIF mapping](docs/acceptance/B23-RA.md): test-only registration-authority identity mapping evidence.
+- [B23d GLEIF runtime/canary](docs/acceptance/B23d-gleif-runtime-canary.md): default-off runtime and partial real-source canary evidence.
+- [B23e Customer adoption](docs/acceptance/B23e-customer-adoption.md): preview, identity arbitration, provenance, and retention evidence.
+- [B24a attachment foundation](docs/acceptance/B24a.md): Work-task attachments and default-disabled worker evidence.
+- [B24b CRM attachments](docs/acceptance/B24b.md): CRM target, parent proof, and deletion-withdrawal evidence.
+- [B24c structured FILE](docs/acceptance/B24c.md): file drafts, binding, and immutable workflow-snapshot evidence.
+- [B24d backend canary](docs/acceptance/B24d-real-backend-canary.md): partial real storage/inspection evidence and readiness limits.
+- [B25a Customer overview](docs/acceptance/B25a.md): independently authorized business-summary evidence.
+- [B26a automation](docs/acceptance/B26a.md): schedule/run, UTC, lease/fence, and reconciliation evidence.
+- [B32a opportunity pipelines](docs/acceptance/B32a.md): catalog lifecycle, migration, and relationship evidence.

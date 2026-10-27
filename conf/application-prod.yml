@@ -1,0 +1,106 @@
+spring:
+  application:
+    name: atom-crm
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: ${SPRING_DATASOURCE_URL}
+    username: ${SPRING_DATASOURCE_USERNAME}
+    password: ${SPRING_DATASOURCE_PASSWORD}
+    # Sized per deployment. Without these the pool falls back to ten connections,
+    # which a handful of concurrent slow commands can occupy for the duration.
+    hikari:
+      maximum-pool-size: ${SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE:20}
+      minimum-idle: ${SPRING_DATASOURCE_HIKARI_MINIMUM_IDLE:5}
+      connection-timeout: ${SPRING_DATASOURCE_HIKARI_CONNECTION_TIMEOUT:30000}
+      idle-timeout: ${SPRING_DATASOURCE_HIKARI_IDLE_TIMEOUT:600000}
+      max-lifetime: ${SPRING_DATASOURCE_HIKARI_MAX_LIFETIME:1800000}
+
+# A command that stops making progress must release its connection and locks rather
+# than hold them until the driver gives up.
+spring.transaction:
+  default-timeout: ${SPRING_TRANSACTION_DEFAULT_TIMEOUT:30}
+  rollback-on-commit-failure: true
+
+# API documentation is opt-in in production.
+springdoc:
+  api-docs:
+    enabled: ${SPRINGDOC_API_DOCS_ENABLED:false}
+  swagger-ui:
+    enabled: ${SPRINGDOC_SWAGGER_UI_ENABLED:false}
+
+# Production never trusts caller-controlled identity headers.
+atom:
+  user-notification:
+    mail:
+      enabled: ${ATOM_USER_NOTIFICATION_MAIL_ENABLED:false}
+      from: ${ATOM_USER_NOTIFICATION_MAIL_FROM:}
+  authentication:
+    signing-key: ${ATOM_AUTHENTICATION_SIGNING_KEY}
+    cookie-secure: true
+    password-reset-url: ${ATOM_AUTHENTICATION_PASSWORD_RESET_URL}
+    password-reset:
+      mail:
+        enabled: ${ATOM_AUTHENTICATION_PASSWORD_RESET_MAIL_ENABLED:false}
+        from: ${ATOM_AUTHENTICATION_PASSWORD_RESET_MAIL_FROM:}
+  enterprise-data:
+    synthetic:
+      enabled: false
+    gleif:
+      # Runtime source, durable shared quota and approved source-rights policy are all opt-in.
+      enabled: false
+    companies-house:
+      # API key, rights, privacy/copyright review, and independent live evidence are all required.
+      enabled: false
+    adoption-retention:
+      # Only enable with an approved ADOPT_SELECTED_FACTS source policy and its durable worker checks.
+      enabled: false
+  security:
+    trusted-header:
+      enabled: false
+      authorities: ""
+  redis:
+    enabled: ${ATOM_REDIS_ENABLED:false}
+  files:
+    enabled: false
+    clamd:
+      enabled: false
+    workers:
+      enabled: false
+  scheduling:
+    enabled: false
+  oa:
+    announcements:
+      publication:
+        enabled: false
+  notifications:
+    channels:
+      email:
+        enabled: false
+        synthetic:
+          enabled: false
+
+# logging configuration
+logging:
+  config: classpath:logback-spring.xml
+  level:
+    root: info
+  file:
+    path: ./logs/app
+
+# mybatis-plus
+mybatis-plus:
+  configuration:
+    map-underscore-to-camel-case: true
+    cache-enabled: false
+    call-setters-on-nulls: true
+    jdbc-type-for-null: 'null'
+  mapper-locations: classpath*:mapper/**/*.xml
+
+# thread pool configuration
+task:
+  executor:
+    core-pool-size: 5
+    max-pool-size: 10
+    queue-capacity: 100
+    keep-alive-seconds: 60
+    thread-name-prefix: atom-crm-task-

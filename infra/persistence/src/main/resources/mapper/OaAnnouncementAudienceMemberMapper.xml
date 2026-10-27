@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="io.github.archetom.crm.infra.persistence.mysql.mapper.OaAnnouncementAudienceMemberMapper">
+
+    <insert id="insertBatch">
+        INSERT INTO oa_announcement_audience_member
+            (tenant_id, announcement_id, actor_id)
+        VALUES
+        <foreach collection="actorIds" item="actorId" separator=",">
+            (#{tenantId}, #{announcementId}, #{actorId})
+        </foreach>
+    </insert>
+</mapper>

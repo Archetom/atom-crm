@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="io.github.archetom.crm.infra.persistence.mysql.mapper.ContactPoolMapper">
+
+    <insert id="ensureAutomationCursor">
+        INSERT INTO crm_contact_pool_automation_cursor (tenant_id, last_pool_id)
+        VALUES (#{tenantId}, NULL)
+        ON DUPLICATE KEY UPDATE tenant_id = #{tenantId}
+    </insert>
+
+    <select id="selectAutomationCursorForUpdate" resultType="java.lang.Long">
+        SELECT last_pool_id
+        FROM crm_contact_pool_automation_cursor
+        WHERE tenant_id = #{tenantId}
+        FOR UPDATE
+    </select>
+
+    <update id="updateAutomationCursor">
+        UPDATE crm_contact_pool_automation_cursor
+        SET last_pool_id = #{lastPoolId},
+            updated_time = CURRENT_TIMESTAMP(6)
+        WHERE tenant_id = #{tenantId}
+    </update>
+
+    <select id="selectNonDeletedCountForUpdate" resultType="java.lang.Long">
+        SELECT COUNT(*)
+        FROM crm_contact_pool
+        WHERE tenant_id = #{tenantId}
+          AND status &lt;&gt; 'DELETED'
+        FOR UPDATE
+    </select>
+
+    <select id="existsActiveAutomaticRelease" resultType="boolean">
+        SELECT EXISTS (
+            SELECT 1
+            FROM crm_contact_pool
+            WHERE tenant_id = #{tenantId}
+              AND status = 'ACTIVE'
+              AND automatic_release_enabled = TRUE
+        )
+    </select>
+
+    <select id="selectCatalogEntries"
+            resultType="io.github.archetom.crm.infra.persistence.mysql.po.ContactPoolCatalogPO">
+        SELECT pool.id,
+               pool.name,
+               pool.status,
+               <choose>
+                   <when test="tenantWide">
+                       TRUE
+                   </when>
+                   <otherwise>
+                       EXISTS (
+                           SELECT 1
+                           FROM crm_contact_pool_administrator administrator
+                           WHERE administrator.tenant_id = pool.tenant_id
+                             AND administrator.pool_id = pool.id
+                             AND administrator.actor_id = #{memberId}
+                       )
+                   </otherwise>
+               </choose> AS administrator
+        FROM crm_contact_pool pool
+        WHERE pool.tenant_id = #{tenantId}
+          AND pool.status = 'ACTIVE'
+          <if test="!tenantWide">
+              AND (
+                  EXISTS (
+                      SELECT 1
+                      FROM crm_contact_pool_administrator administrator
+                      WHERE administrator.tenant_id = pool.tenant_id
+                        AND administrator.pool_id = pool.id
+                        AND administrator.actor_id = #{memberId}
+                  )
+                  OR EXISTS (
+                      SELECT 1
+                      FROM crm_contact_pool_eligible_member eligible_member
+                      WHERE eligible_member.tenant_id = pool.tenant_id
+                        AND eligible_member.pool_id = pool.id
+                        AND eligible_member.actor_id = #{memberId}
+                  )
+                  <if test="departmentId != null">
+                      OR EXISTS (
+                          SELECT 1
+                          FROM crm_contact_pool_eligible_department eligible_department
+                          WHERE eligible_department.tenant_id = pool.tenant_id
+                            AND eligible_department.pool_id = pool.id
+                            AND eligible_department.department_id = #{departmentId}
+                      )
+                  </if>
+              )
+          </if>
+        ORDER BY pool.name ASC, pool.id ASC
+        LIMIT #{limit}
+    </select>
+
+    <select id="selectContactCounts"
+            resultType="io.github.archetom.crm.infra.persistence.mysql.po.ContactPoolContactCountPO">
+        SELECT membership.pool_id AS poolId,
+               COUNT(*) AS contactCount
+        FROM crm_contact_pool_membership membership
+        WHERE membership.tenant_id = #{tenantId}
+          AND membership.pool_id IN
+          <foreach collection="poolIds" item="poolId" open="(" separator="," close=")">
+              #{poolId}
+          </foreach>
+        GROUP BY membership.pool_id
+    </select>
+
+    <update id="transferMemberships">
+        UPDATE crm_contact_pool_membership
+        SET pool_id = #{targetPoolId}
+        WHERE tenant_id = #{tenantId}
+          AND pool_id = #{sourcePoolId}
+    </update>
+
+    <select id="selectAutomationCandidateIds" resultType="java.lang.Long">
+        SELECT c.id
+        FROM crm_contact c
+        WHERE c.tenant_id = #{tenantId}
+          AND c.status = 'ACTIVE'
+          AND c.updated_time &lt;= #{cutoff}
+          <if test="ruleType == 'NOT_WON'">
+              AND c.deal_status &lt;&gt; 'WON'
+          </if>
+          AND NOT EXISTS (
+              SELECT 1
+              FROM crm_contact_pool_membership current_pool
+              WHERE current_pool.tenant_id = c.tenant_id
+                AND current_pool.contact_id = c.id
+          )
+          AND (
+              EXISTS (
+                  SELECT 1
+                  FROM crm_contact_pool_eligible_member eligible_member
+                  WHERE eligible_member.tenant_id = c.tenant_id
+                    AND eligible_member.pool_id = #{poolId}
+                    AND eligible_member.actor_id = c.owner_actor_id
+              )
+              OR EXISTS (
+                  SELECT 1
+                  FROM organization_membership owner_membership
+                  JOIN crm_contact_pool_eligible_department eligible_department
+                    ON eligible_department.tenant_id = owner_membership.tenant_id
+                   AND eligible_department.department_id = owner_membership.department_id
+                   AND eligible_department.pool_id = #{poolId}
+                  WHERE owner_membership.tenant_id = c.tenant_id
+                    AND owner_membership.actor_id = c.owner_actor_id
+                    AND owner_membership.status = 'ACTIVE'
+              )
+          )
+        ORDER BY c.updated_time ASC, c.id ASC
+        LIMIT #{limit}
+    </select>
+</mapper>

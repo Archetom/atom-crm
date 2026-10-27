@@ -1,0 +1,20 @@
+name: Usage question / 使用问题
+description: Ask about setup or documented behavior without exposing private data.
+body:
+  - type: markdown
+    attributes:
+      value: Read README.md, docs/configuration.md, and docs/test-guide.md first. Use SECURITY.md for suspected vulnerabilities.
+  - type: textarea
+    id: question
+    attributes:
+      label: Question / 问题
+      description: What are you trying to do, and which documentation or commands have you tried?
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment / 环境
+      description: Include relevant commit IDs and tool versions. Do not post passwords, tokens, customer records, or unredacted logs.
+    validations:
+      required: true

@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="io.github.archetom.crm.infra.persistence.mysql.mapper.ApprovalInstanceMapper">
+
+    <select id="selectApprovalScanPage"
+            resultType="io.github.archetom.crm.infra.persistence.mysql.po.ApprovalInstanceReferencePO">
+        SELECT instance.id, instance.object_type, instance.subject_id
+          FROM approval_instance instance
+         WHERE instance.tenant_id = #{tenantId}
+        <choose>
+            <when test="bucket == 'PENDING'">
+                AND EXISTS (
+                    SELECT 1
+                      FROM approval_review_task task
+                     WHERE task.tenant_id = instance.tenant_id
+                       AND task.instance_id = instance.id
+                       AND task.assigned_actor_id = #{memberId}
+                       AND task.status = 'PENDING'
+                )
+            </when>
+            <when test="bucket == 'PROCESSED'">
+                AND EXISTS (
+                    SELECT 1
+                      FROM approval_review_task task
+                     WHERE task.tenant_id = instance.tenant_id
+                       AND task.instance_id = instance.id
+                       AND task.assigned_actor_id = #{memberId}
+                       AND task.status IN ('APPROVED', 'REJECTED', 'TRANSFERRED')
+                )
+            </when>
+            <when test="bucket == 'SUBMITTED'">
+                AND instance.applicant_actor_id = #{memberId}
+            </when>
+            <when test="bucket == 'WATCHING'">
+                AND EXISTS (
+                    SELECT 1
+                      FROM approval_instance_watcher watcher
+                     WHERE watcher.tenant_id = instance.tenant_id
+                       AND watcher.instance_id = instance.id
+                       AND watcher.actor_id = #{memberId}
+                )
+            </when>
+        </choose>
+        <if test="status != null">
+            AND instance.status = #{status}
+        </if>
+        <if test="objectType != null">
+            AND instance.object_type = #{objectType}
+        </if>
+        <if test="subjectId != null">
+            AND instance.subject_id = #{subjectId}
+        </if>
+        <if test="keyword != null">
+            AND instance.object_type &lt;&gt; 'OA_REQUEST'
+            AND instance.title LIKE CONCAT('%', #{keyword}, '%') ESCAPE '!'
+        </if>
+         ORDER BY instance.updated_time DESC, instance.id DESC
+    </select>
+
+    <select id="selectLatestSubjectStatuses"
+            resultType="io.github.archetom.crm.infra.persistence.mysql.po.ApprovalSubjectStatusPO">
+        SELECT instance.subject_id AS subjectId, instance.status
+          FROM approval_instance instance
+          INNER JOIN (
+                SELECT subject_id, MAX(id) AS instance_id
+                  FROM approval_instance
+                 WHERE tenant_id = #{tenantId}
+                   AND object_type = #{objectType}
+                   AND subject_id IN
+                    <foreach collection="subjectIds" item="subjectId" open="(" separator="," close=")">
+                        #{subjectId}
+                    </foreach>
+                 GROUP BY subject_id
+          ) latest ON latest.instance_id = instance.id
+         WHERE instance.tenant_id = #{tenantId}
+    </select>
+</mapper>

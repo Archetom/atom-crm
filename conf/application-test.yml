@@ -1,0 +1,103 @@
+# test environment configuration
+spring:
+  application:
+    name: atom-crm-test
+  # Redis is explicitly disabled for this profile, so avoid creating unused clients and health checks.
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.data.redis.autoconfigure.DataRedisAutoConfiguration
+      - org.springframework.boot.data.redis.autoconfigure.DataRedisReactiveAutoConfiguration
+      - org.springframework.boot.data.redis.autoconfigure.DataRedisRepositoriesAutoConfiguration
+      - org.springframework.boot.data.redis.autoconfigure.health.DataRedisHealthContributorAutoConfiguration
+      - org.springframework.boot.data.redis.autoconfigure.health.DataRedisReactiveHealthContributorAutoConfiguration
+      - org.springframework.boot.data.redis.autoconfigure.observation.LettuceObservationAutoConfiguration
+  datasource:
+    # URL and credentials are supplied by MySQL Testcontainers.
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      maximum-pool-size: 5
+      minimum-idle: 1
+      connection-timeout: 10000
+      idle-timeout: 300000
+      max-lifetime: 900000
+
+# Keep the machine-readable contract in the integration-test surface.
+springdoc:
+  api-docs:
+    enabled: true
+  swagger-ui:
+    enabled: false
+
+# MyBatis-Plus configuration
+mybatis-plus:
+  configuration:
+    map-underscore-to-camel-case: true
+  mapper-locations: classpath*:mapper/**/*.xml
+  type-aliases-package: io.github.archetom.crm.infra.persistence.mysql.po
+
+# thread pool configuration
+task:
+  executor:
+    core-pool-size: 2
+    max-pool-size: 4
+    queue-capacity: 50
+    keep-alive-seconds: 30
+    thread-name-prefix: "test-task-"
+
+# logging configuration
+logging:
+  level:
+    root: WARN
+    io.github.archetom.crm: INFO
+    org.springframework.web: WARN
+    org.springframework.security: WARN
+    org.springframework.transaction: WARN
+    org.mybatis: WARN
+    com.baomidou.mybatisplus: WARN
+    org.springframework.data.redis: WARN
+    org.testcontainers: INFO
+    com.github.dockerjava: WARN
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level [%logger{36}:%line] - %msg%n"
+
+# server configuration
+server:
+  port: 0 # random port, avoid test conflicts
+
+# management endpoint configuration
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      show-details: when-authorized
+
+# Trusted-header authentication is explicitly enabled for integration tests.
+atom:
+  enterprise-data:
+    synthetic:
+      enabled: true
+  security:
+    trusted-header:
+      enabled: true
+      authorities: "organization:bootstrap,organization:request"
+  redis:
+    enabled: false
+
+# transaction configuration
+spring.transaction:
+  default-timeout: 30
+  rollback-on-commit-failure: true
+
+# Jackson configuration
+spring.jackson:
+  serialization:
+    fail-on-empty-beans: false
+  deserialization:
+    fail-on-unknown-properties: false
+  datatype:
+    datetime:
+      write-dates-as-timestamps: false
+  time-zone: UTC

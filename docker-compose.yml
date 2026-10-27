@@ -1,0 +1,36 @@
+services:
+  mysql:
+    image: mysql:9.7.1
+    container_name: atom-crm-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: root123
+      MYSQL_DATABASE: atom_db
+      MYSQL_USER: atom_user
+      MYSQL_PASSWORD: atom_pass
+    ports:
+      - "127.0.0.1:3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - atom-crm-network
+
+  redis:
+    image: redis:8.8.0-alpine
+    container_name: atom-crm-redis
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+    networks:
+      - atom-crm-network
+
+volumes:
+  mysql_data:
+  redis_data:
+
+networks:
+  atom-crm-network:
+    driver: bridge

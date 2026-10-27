@@ -1,0 +1,7 @@
+# Runtime image accepts only the verified executable JAR.
+**
+!start/
+!start/target/
+!start/target/atom-crm-start.jar
+!Dockerfile
+!.dockerignore

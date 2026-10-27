@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="io.github.archetom.crm.infra.persistence.mysql.mapper.UserMapper">
+
+    <!-- common query mapping result -->
+    <resultMap id="BaseResultMap" type="io.github.archetom.crm.infra.persistence.mysql.po.UserPO">
+        <id column="id" property="id" />
+        <result column="username" property="username" />
+        <result column="email" property="email" />
+        <result column="phone_number" property="phoneNumber" />
+        <result column="password" property="passwordHash" />
+        <result column="real_name" property="realName" />
+        <result column="status" property="status" />
+        <result column="external_id" property="externalId" />
+        <result column="is_external_user" property="externalUser" />
+        <result column="is_admin" property="admin" />
+        <result column="tenant_id" property="tenantId" />
+        <result column="version" property="version" />
+        <result column="created_time" property="createdTime" />
+        <result column="updated_time" property="updatedTime" />
+    </resultMap>
+
+    <!-- common query result column -->
+    <sql id="Base_Column_List">
+        id, tenant_id, username, email, phone_number, password, real_name, status,
+        external_id, is_external_user, is_admin, version, created_time, updated_time
+    </sql>
+
+    <!-- Bounded user query with an explicit tenant predicate. -->
+    <select id="selectUserPage" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List" />
+        FROM t_user
+        WHERE tenant_id = #{tenantId}
+        <if test="username != null and username != ''">
+            AND username LIKE CONCAT('%', #{username}, '%')
+        </if>
+        <if test="email != null and email != ''">
+            AND email LIKE CONCAT('%', #{email}, '%')
+        </if>
+        <choose>
+            <when test="status != null and status != ''">
+                AND status = #{status}
+            </when>
+            <otherwise>
+                AND status &lt;&gt; 'DELETED'
+            </otherwise>
+        </choose>
+        ORDER BY created_time DESC
+    </select>
+
+</mapper>

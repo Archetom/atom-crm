@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+
+    <!-- Log4j has three main components: Loggers, Appenders, and Layouts. They represent log categories, log destinations, and log formatting. -->
+    <!-- Loggers are divided into five ordered levels: DEBUG, INFO, WARN, ERROR, and FATAL. Log4j only outputs messages whose level is not lower than the configured level.-->
+    <!-- Read configuration from application.yml-->
+    <springProperty scope="context" name="APP_LOG_PATH" source="logging.file.path" defaultValue="./logs/app"/>
+    <springProperty scope="context" name="APP_NAME" source="spring.application.name"/>
+    <springProperty scope="context" name="APP_ACTIVE" source="spring.profiles.active" defaultValue="ie"/>
+    <springProperty scope="context" name="LOG_LEVEL" source="logging.level.root" defaultValue="info"/>
+
+    <!--Enable this option to avoid losing in-memory log data when the process exits-->
+    <shutdownHook class="ch.qos.logback.core.hook.DefaultShutdownHook"/>
+
+    <!-- Log format and retention time -->
+    <property name="MAX_HISTORY" value="7"/>
+    <property name="LOG_PATTERN"
+              value="%d{yyyy-MM-dd HH:mm:ss.SSS} %5p - %msg%n"/>
+    <property name="LOG_PATTERN-PERF"
+              value="%n - %msg%n"/>
+
+    <!--****************************************************** Do not change the section below ****************************************-->
+    <!-- Console appender -->
+    <appender name="CONSOLE_APPENDER" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>${LOG_PATTERN}</pattern>
+        </encoder>
+    </appender>
+
+    <!--****************************************************** Do not change the section above ****************************************-->
+    <!-- Log file appender -->
+    <appender name="FILE_APPENDER" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${APP_LOG_PATH}/${APP_NAME}.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>${APP_LOG_PATH}/${APP_NAME}.log.%d{yyyy-MM-dd}</fileNamePattern>
+            <maxHistory>${MAX_HISTORY}</maxHistory>
+        </rollingPolicy>
+        <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+            <Pattern>${LOG_PATTERN}</Pattern>
+        </encoder>
+    </appender>
+
+    <!-- Error log file appender used by each business logger -->
+    <appender name="ERROR_FILE_APPENDER" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${APP_LOG_PATH}/${APP_NAME}-error.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>${APP_LOG_PATH}/${APP_NAME}-error.log.%d{yyyy-MM-dd}</fileNamePattern>
+            <maxHistory>${MAX_HISTORY}</maxHistory>
+        </rollingPolicy>
+        <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+            <Pattern>${LOG_PATTERN}</Pattern>
+        </encoder>
+        <filter class="ch.qos.logback.classic.filter.LevelFilter">
+            <level>error</level>
+            <onMismatch>DENY</onMismatch>
+        </filter>
+    </appender>
+
+    <!--****************************************************** Module logging configuration; add corresponding configuration when adding a new module ****************************************-->
+    <root level="info">
+        <appender-ref ref="CONSOLE_APPENDER"/>
+        <appender-ref ref="FILE_APPENDER"/>
+        <appender-ref ref="ERROR_FILE_APPENDER"/>
+    </root>
+    <!--****************************************************** End of module logging configuration; add corresponding configuration when adding a new module ****************************************-->
+
+</configuration>

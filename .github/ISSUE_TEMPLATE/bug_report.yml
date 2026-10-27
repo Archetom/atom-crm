@@ -1,0 +1,36 @@
+name: Bug report / 缺陷反馈
+description: Report reproducible backend or API behavior. Security reports must remain private.
+body:
+  - type: markdown
+    attributes:
+      value: |
+        For suspected vulnerabilities, follow SECURITY.md instead of posting details here.
+        Use synthetic data. Do not attach credentials, cookies, customer records, or unredacted logs.
+        安全问题请先阅读 SECURITY.md，通过私密渠道报告；请勿公开生产数据或凭据。
+  - type: textarea
+    id: environment
+    attributes:
+      label: Versions and environment / 版本与环境
+      description: Backend and frontend commit IDs, JDK, OS, database version, and active profile. Omit secrets.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Reproduction / 复现步骤
+      description: A minimal sequence using synthetic records, including relevant API routes.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior / 预期行为
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior / 实际行为
+      description: Include safe error codes and redacted diagnostics, plus test execution and skip counts if relevant.
+    validations:
+      required: true

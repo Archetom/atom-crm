@@ -1,0 +1,128 @@
+spring:
+  task:
+    scheduling:
+      # Two @Scheduled methods share this pool: the bounded recurrence reconciliation and the
+      # background pulse that dispatches every worker lane. One thread lets a slow reconcile
+      # delay every lane behind it.
+      pool:
+        size: 4
+  application:
+    name: atom-crm
+  jackson:
+    time-zone: UTC
+    # The published contract describes unset properties as absent from the response, and the
+    # integration tests assert that shape. Declaring it here rather than per profile means the
+    # wire format a test verifies is the one every deployment actually serves.
+    default-property-inclusion: NON_NULL
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    validate-on-migrate: true
+    clean-disabled: true
+    baseline-on-migrate: false
+  sql:
+    init:
+      mode: never
+
+atom:
+  api:
+    version: 1.0.0
+  authentication:
+    session-ttl: PT8H
+    login-challenge-ttl: PT5M
+    password-reset-ttl: PT15M
+    signing-key: ${ATOM_AUTHENTICATION_SIGNING_KEY:}
+    cookie-secure: false
+    password-reset-url: ${ATOM_AUTHENTICATION_PASSWORD_RESET_URL:}
+    # Per-source admission control for the anonymous routes. Credential attempts spend
+    # password-hashing CPU and reset requests spend a third party's mailbox, so the lanes
+    # are metered separately and one cannot exhaust another.
+    max-credential-attempts-per-source-per-minute: 20
+    max-reset-requests-per-source-per-minute: 5
+    max-status-reads-per-source-per-minute: 30
+    source-bucket-capacity: 10000
+    bucket-ttl-seconds: 120
+    password-reset:
+      mail:
+        enabled: ${ATOM_AUTHENTICATION_PASSWORD_RESET_MAIL_ENABLED:false}
+        from: ${ATOM_AUTHENTICATION_PASSWORD_RESET_MAIL_FROM:}
+  security:
+    password:
+      # BCrypt is the replaceable baseline adapter; tune only after measuring authentication capacity.
+      bcrypt-strength: 12
+    trusted-header:
+      enabled: false
+      authorities: ""
+  redis:
+    enabled: false
+  scheduling:
+    # Production scheduling is opt-in. Invalid values fail this lane closed only.
+    enabled: false
+    pulse-delay: PT5S
+    automation-lane-concurrency: 1
+    attachment-lane-concurrency: 2
+    cadence-revision: B26A_V2
+    pool-cadence: PT1H
+    pool-record-limit: 200
+    recurrence-cadence: PT5M
+    recurrence-record-limit: 100
+    lease-duration: PT2M
+    run-deadline: PT24H
+    max-attempts: 5
+    retry-backoff: PT1M
+    terminal-retention: P14D
+  work:
+    recurrence:
+      enabled: true
+      policy-revision: B27A_V1
+      tzdb-fingerprint: AUTO
+      reconciliation-delay: PT5S
+  oa:
+    announcements:
+      publication:
+        # Scheduling is opt-in; existing announcement CRUD and immediate publication stay available.
+        enabled: false
+        pump-concurrency: 1
+        lease-duration: PT2M
+        max-lateness: P1D
+        max-attempts: 5
+        retry-backoff: PT1M
+        terminal-retention: P14D
+  notifications:
+    reminders:
+      # MySQL occurrence/inbox effects are local and independent of provider delivery.
+      enabled: true
+      pump-concurrency: 1
+      lease-duration: PT2M
+      terminal-retention: P14D
+      notification-retention: P90D
+      max-attempts: 5
+      retry-deadline: P1D
+      retry-backoff: PT1M
+
+management:
+  health:
+    # Do not create a failing Redis health dependency while the optional adapter is disabled.
+    redis:
+      enabled: ${atom.redis.enabled:false}
+  endpoints:
+    web:
+      exposure:
+        include: health
+      base-path: /actuator
+  endpoint:
+    health:
+      show-details: when-authorized
+      show-components: when-authorized
+  metrics:
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true
+      percentiles:
+        http.server.requests: 0.5, 0.95, 0.99
+    tags:
+      application: atom-crm
+  prometheus:
+    metrics:
+      export:
+        enabled: false

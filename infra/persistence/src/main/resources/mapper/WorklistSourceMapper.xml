@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="io.github.archetom.crm.infra.persistence.mysql.mapper.WorklistSourceMapper">
+    <select id="selectDue"
+            resultType="io.github.archetom.crm.infra.persistence.mysql.po.WorklistSourceRecordPO">
+        SELECT source, source_id, source_version, subject_type, subject_id, due_time, summary
+          FROM (
+            <choose>
+                <when test="source == 'CONTACT'">
+                    SELECT 'CONTACT' source, id source_id, version source_version,
+                           'CONTACT' subject_type, id subject_id,
+                           next_contact_time due_time, name summary
+                      FROM crm_contact
+                     WHERE tenant_id = #{tenantId}
+                       AND status = 'ACTIVE'
+                       AND next_contact_time &gt;= #{fromInclusive}
+                       AND next_contact_time &lt; #{untilExclusive}
+                </when>
+                <when test="source == 'LEAD'">
+                    SELECT 'LEAD' source, id source_id, version source_version,
+                           'LEAD' subject_type, id subject_id,
+                           next_contact_time due_time, name summary
+                      FROM crm_lead
+                     WHERE tenant_id = #{tenantId}
+                       AND status = 'ACTIVE'
+                       AND next_contact_time &gt;= #{fromInclusive}
+                       AND next_contact_time &lt; #{untilExclusive}
+                </when>
+                <when test="source == 'OPPORTUNITY'">
+                    SELECT 'OPPORTUNITY' source, id source_id, version source_version,
+                           'OPPORTUNITY' subject_type, id subject_id,
+                           next_contact_time due_time, name summary
+                      FROM crm_opportunity
+                     WHERE tenant_id = #{tenantId}
+                       AND status = 'ACTIVE'
+                       AND outcome = 'OPEN'
+                       AND next_contact_time &gt;= #{fromInclusive}
+                       AND next_contact_time &lt; #{untilExclusive}
+                </when>
+                <when test="source == 'RECEIVABLE_PLAN'">
+                    SELECT 'RECEIVABLE_PLAN' source, plan.id source_id,
+                           plan.version source_version, 'RECEIVABLE_PLAN' subject_type,
+                           plan.id subject_id,
+                           TIMESTAMP(DATE_SUB(plan.due_date,
+                               INTERVAL COALESCE(plan.reminder_days, 0) DAY)) due_time,
+                           CONCAT('Plan #', plan.installment) summary
+                      FROM crm_receivable_plan plan
+                     WHERE plan.tenant_id = #{tenantId}
+                       AND plan.status = 'ACTIVE'
+                       AND DATE_SUB(plan.due_date,
+                           INTERVAL COALESCE(plan.reminder_days, 0) DAY) = DATE(#{fromInclusive})
+                       AND COALESCE((
+                           SELECT SUM(receipt.amount)
+                             FROM crm_receivable receipt
+                            WHERE receipt.tenant_id = plan.tenant_id
+                              AND receipt.receivable_plan_id = plan.id
+                              AND receipt.status = 'ACTIVE'
+                       ), 0) &lt; plan.planned_amount
+                </when>
+                <when test="source == 'CONTRACT'">
+                    SELECT 'CONTRACT' source, id source_id, version source_version,
+                           'CONTRACT' subject_type, id subject_id,
+                           TIMESTAMP(end_date) due_time, contract_number summary
+                      FROM crm_contract
+                     WHERE tenant_id = #{tenantId}
+                       AND status = 'ACTIVE'
+                       AND end_date = DATE(#{fromInclusive})
+                </when>
+                <when test="source == 'APPROVAL'">
+                    SELECT 'APPROVAL' source, instance.id source_id,
+                           instance.version source_version, instance.object_type subject_type,
+                           instance.subject_id subject_id, #{fromInclusive} due_time,
+                           instance.title summary
+                      FROM approval_instance instance
+                     WHERE instance.tenant_id = #{tenantId}
+                       AND instance.status = 'PENDING'
+                       AND EXISTS (
+                           SELECT 1
+                             FROM approval_review_task task
+                            WHERE task.tenant_id = instance.tenant_id
+                              AND task.instance_id = instance.id
+                              AND task.assigned_actor_id = #{memberId}
+                              AND task.status = 'PENDING'
+                       )
+                </when>
+                <otherwise>
+                    SELECT NULL source, NULL source_id, NULL source_version,
+                           NULL subject_type, NULL subject_id, NULL due_time, NULL summary
+                     WHERE 1 = 0
+                </otherwise>
+            </choose>
+          ) source_rows
+         WHERE 1 = 1
+        <if test="afterTime != null">
+            AND (due_time &gt; #{afterTime}
+                 OR (due_time = #{afterTime} AND source_id &gt; #{afterId}))
+        </if>
+         ORDER BY due_time, source_id
+         LIMIT #{limit}
+    </select>
+</mapper>

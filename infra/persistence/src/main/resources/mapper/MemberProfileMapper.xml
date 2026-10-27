@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="io.github.archetom.crm.infra.persistence.mysql.mapper.MemberProfileMapper">
+
+    <resultMap id="MemberProfileResultMap" type="io.github.archetom.crm.infra.persistence.mysql.po.MemberProfilePO">
+        <id column="actor_id" property="actorId" />
+        <result column="display_name" property="displayName" />
+        <result column="email" property="email" />
+        <result column="phone_number" property="phoneNumber" />
+        <result column="status" property="status" />
+        <result column="version" property="version" />
+        <result column="created_time" property="createdTime" />
+        <result column="updated_time" property="updatedTime" />
+    </resultMap>
+
+    <select id="selectActiveProfilePage" resultMap="MemberProfileResultMap">
+        SELECT p.actor_id, p.display_name, p.email, p.phone_number, p.status, p.version, p.created_time, p.updated_time
+        FROM organization_member_profile p
+        INNER JOIN organization_membership m
+            ON m.actor_id = p.actor_id
+           AND m.tenant_id = #{tenantId}
+           AND m.status = 'ACTIVE'
+        WHERE p.status = 'ACTIVE'
+        <if test="keyword != null and keyword != ''">
+            AND p.display_name LIKE CONCAT('%', #{keyword}, '%')
+        </if>
+        ORDER BY p.display_name ASC, p.actor_id ASC
+    </select>
+
+    <select id="selectActiveDepartmentProfilePage" resultMap="MemberProfileResultMap">
+        SELECT p.actor_id, p.display_name, p.email, p.phone_number, p.status, p.version, p.created_time, p.updated_time
+        FROM organization_member_profile p
+        INNER JOIN organization_membership m
+            ON m.actor_id = p.actor_id
+           AND m.tenant_id = #{tenantId}
+           AND m.department_id = #{departmentId}
+           AND m.status = 'ACTIVE'
+        WHERE p.status = 'ACTIVE'
+        <if test="keyword != null and keyword != ''">
+            AND p.display_name LIKE CONCAT('%', #{keyword}, '%')
+        </if>
+        ORDER BY p.display_name ASC, p.actor_id ASC
+    </select>
+
+    <select id="selectActiveDepartmentProfilesPage" resultMap="MemberProfileResultMap">
+        SELECT p.actor_id, p.display_name, p.email, p.phone_number, p.status, p.version, p.created_time, p.updated_time
+        FROM organization_member_profile p
+        INNER JOIN organization_membership m
+            ON m.actor_id = p.actor_id
+           AND m.tenant_id = #{tenantId}
+           AND m.status = 'ACTIVE'
+        WHERE p.status = 'ACTIVE'
+          AND m.department_id IN
+          <foreach collection="departmentIds" item="departmentId" open="(" separator="," close=")">
+              #{departmentId}
+          </foreach>
+        <if test="keyword != null and keyword != ''">
+            AND p.display_name LIKE CONCAT('%', #{keyword}, '%')
+        </if>
+        ORDER BY p.display_name ASC, p.actor_id ASC
+    </select>
+</mapper>

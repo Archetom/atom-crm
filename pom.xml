@@ -1,0 +1,247 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>4.1.0</version>
+    </parent>
+
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>io.github.archetom</groupId>
+    <artifactId>atom-crm</artifactId>
+    <packaging>pom</packaging>
+    <version>1.0.0</version>
+    <name>atom-crm</name>
+    <description>atom-crm: Java 25 and Spring Boot 4.1 application with Domain-Driven Design boundaries</description>
+    <url>https://github.com/Archetom/atom-crm</url>
+
+    <scm>
+        <connection>scm:git:https://github.com/Archetom/atom-crm.git</connection>
+        <developerConnection>scm:git:ssh://git@github.com/Archetom/atom-crm.git</developerConnection>
+        <url>https://github.com/Archetom/atom-crm</url>
+    </scm>
+
+    <licenses>
+        <license>
+            <name>MIT License</name>
+            <url>https://opensource.org/license/mit</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
+
+    <modules>
+        <module>api</module>
+        <module>domain</module>
+        <module>shared</module>
+        <module>application</module>
+        <module>infra/external</module>
+        <module>infra/security</module>
+        <module>infra/persistence</module>
+        <module>infra/rest</module>
+        <module>infra/facade</module>
+        <module>start</module>
+    </modules>
+
+    <properties>
+        <java.version>25</java.version>
+        <maven.minimum.version>3.9.0</maven.minimum.version>
+        <project.build.outputTimestamp>2026-07-24T00:00:00Z</project.build.outputTimestamp>
+
+        <!-- Common -->
+        <atom.common.version>1.0.0</atom.common.version>
+
+        <!-- Maven Plugin -->
+        <maven-dependency-plugin.version>3.11.0</maven-dependency-plugin.version>
+
+        <!-- Database -->
+        <mybatis.plus.version>3.5.16</mybatis.plus.version>
+
+        <!-- MapStruct -->
+        <mapstruct.version>1.6.3</mapstruct.version>
+        <lombok.mapstruct.binding.version>0.2.0</lombok.mapstruct.binding.version>
+
+        <!-- Architecture tests -->
+        <archunit.version>1.4.2</archunit.version>
+
+        <!-- SpringDoc -->
+        <springdoc.version>3.0.3</springdoc.version>
+        <swagger.annotations.version>2.2.47</swagger.annotations.version>
+    </properties>
+
+    <!-- The root POM owns dependency versions; each module declares what it uses directly. -->
+    <dependencyManagement>
+        <dependencies>
+            <!-- Common -->
+            <dependency>
+                <groupId>io.github.archetom</groupId>
+                <artifactId>atom-common</artifactId>
+                <version>${atom.common.version}</version>
+            </dependency>
+            <!-- MapStruct -->
+            <!-- https://mvnrepository.com/artifact/org.mapstruct/mapstruct -->
+            <dependency>
+                <groupId>org.mapstruct</groupId>
+                <artifactId>mapstruct</artifactId>
+                <version>${mapstruct.version}</version>
+            </dependency>
+
+            <!-- Database -->
+            <!-- https://mvnrepository.com/artifact/com.baomidou/mybatis-plus-spring-boot4-starter -->
+            <!-- https://github.com/baomidou/mybatis-plus -->
+            <dependency>
+                <groupId>com.baomidou</groupId>
+                <artifactId>mybatis-plus-spring-boot4-starter</artifactId>
+                <version>${mybatis.plus.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.baomidou</groupId>
+                <artifactId>mybatis-plus-jsqlparser</artifactId>
+                <version>${mybatis.plus.version}</version>
+            </dependency>
+            <!-- SpringDoc -->
+            <!-- https://mvnrepository.com/artifact/org.springdoc/springdoc-openapi-starter-webmvc-ui -->
+            <dependency>
+                <groupId>org.springdoc</groupId>
+                <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+                <version>${springdoc.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.swagger.core.v3</groupId>
+                <artifactId>swagger-annotations-jakarta</artifactId>
+                <version>${swagger.annotations.version}</version>
+            </dependency>
+
+            <!-- Project Modules -->
+            <!-- Public API contracts -->
+            <dependency>
+                <groupId>io.github.archetom</groupId>
+                <artifactId>atom-crm-api</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <!-- Framework-neutral domain model -->
+            <dependency>
+                <groupId>io.github.archetom</groupId>
+                <artifactId>atom-crm-domain</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <!-- Application use cases -->
+            <dependency>
+                <groupId>io.github.archetom</groupId>
+                <artifactId>atom-crm-application</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <!-- Infrastructure adapters -->
+            <dependency>
+                <groupId>io.github.archetom</groupId>
+                <artifactId>atom-crm-infra-external</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.archetom</groupId>
+                <artifactId>atom-crm-infra-security</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.archetom</groupId>
+                <artifactId>atom-crm-infra-persistence</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.archetom</groupId>
+                <artifactId>atom-crm-infra-rest</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.archetom</groupId>
+                <artifactId>atom-crm-infra-facade</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <!-- Shared result and error contracts -->
+            <dependency>
+                <groupId>io.github.archetom</groupId>
+                <artifactId>atom-crm-shared</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+    <build>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.springframework.boot</groupId>
+                    <artifactId>spring-boot-maven-plugin</artifactId>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-compiler-plugin</artifactId>
+                    <configuration>
+                        <annotationProcessorPaths>
+                            <path>
+                                <groupId>org.projectlombok</groupId>
+                                <artifactId>lombok</artifactId>
+                                <version>${lombok.version}</version>
+                            </path>
+                            <path>
+                                <groupId>org.projectlombok</groupId>
+                                <artifactId>lombok-mapstruct-binding</artifactId>
+                                <version>${lombok.mapstruct.binding.version}</version>
+                            </path>
+                            <path>
+                                <groupId>org.mapstruct</groupId>
+                                <artifactId>mapstruct-processor</artifactId>
+                                <version>${mapstruct.version}</version>
+                            </path>
+                        </annotationProcessorPaths>
+                    </configuration>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-source-plugin</artifactId>
+                    <configuration>
+                        <attach>true</attach>
+                    </configuration>
+                    <executions>
+                        <execution>
+                            <phase>compile</phase>
+                            <goals>
+                                <goal>jar-no-fork</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-enforcer-plugin</artifactId>
+                    <executions>
+                        <execution>
+                            <id>enforce-versions</id>
+                            <goals>
+                                <goal>enforce</goal>
+                            </goals>
+                            <configuration>
+                                <rules>
+                                    <dependencyConvergence/>
+                                    <requireJavaVersion>
+                                        <version>[${java.version},)</version>
+                                    </requireJavaVersion>
+                                    <requireMavenVersion>
+                                        <version>[${maven.minimum.version},)</version>
+                                    </requireMavenVersion>
+                                </rules>
+                            </configuration>
+                        </execution>
+                    </executions>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-enforcer-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
+</project>

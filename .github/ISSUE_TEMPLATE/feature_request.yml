@@ -1,0 +1,22 @@
+name: Feature request / 功能建议
+description: Describe a concrete use case or missing capability.
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Use case / 使用场景
+      description: Who needs this, and what cannot be completed today? Use synthetic examples.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed behavior / 期望行为
+      description: Describe the user-facing outcome and any API or frontend coordination needed.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives and scope / 替代方案与范围
+      description: Existing workarounds, relevant modules, and boundaries that should remain unchanged.

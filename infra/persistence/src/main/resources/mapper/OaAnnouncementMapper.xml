@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="io.github.archetom.crm.infra.persistence.mysql.mapper.OaAnnouncementMapper">
+
+    <select id="selectActiveRecipientIds" resultType="java.lang.Long">
+        WITH RECURSIVE selected_department (tenant_id, id) AS (
+            SELECT department.tenant_id, department.id
+            FROM organization_department department
+            INNER JOIN oa_announcement_audience_department audience
+                    ON audience.tenant_id = department.tenant_id
+                   AND audience.department_id = department.id
+            WHERE audience.tenant_id = #{tenantId}
+              AND audience.announcement_id = #{announcementId}
+              AND department.status = 'ACTIVE'
+            UNION DISTINCT
+            SELECT child.tenant_id, child.id
+            FROM organization_department child
+            INNER JOIN selected_department parent
+                    ON parent.tenant_id = child.tenant_id
+                   AND parent.id = child.parent_department_id
+            WHERE child.status = 'ACTIVE'
+        ),
+        candidate (actor_id) AS (
+            SELECT membership.actor_id
+            FROM oa_announcement announcement
+            INNER JOIN organization_membership membership
+                    ON membership.tenant_id = announcement.tenant_id
+                   AND membership.status = 'ACTIVE'
+            WHERE announcement.tenant_id = #{tenantId}
+              AND announcement.id = #{announcementId}
+              AND announcement.tenant_audience = 1
+            UNION DISTINCT
+            SELECT membership.actor_id
+            FROM oa_announcement_audience_member audience
+            INNER JOIN organization_membership membership
+                    ON membership.tenant_id = audience.tenant_id
+                   AND membership.actor_id = audience.actor_id
+                   AND membership.status = 'ACTIVE'
+            WHERE audience.tenant_id = #{tenantId}
+              AND audience.announcement_id = #{announcementId}
+            UNION DISTINCT
+            SELECT membership.actor_id
+            FROM selected_department department
+            INNER JOIN organization_membership membership
+                    ON membership.tenant_id = department.tenant_id
+                   AND membership.department_id = department.id
+                   AND membership.status = 'ACTIVE'
+        )
+        SELECT actor_id
+        FROM candidate
+        ORDER BY actor_id
+        LIMIT #{limit}
+    </select>
+
+    <select id="selectStatistics"
+            resultType="io.github.archetom.crm.infra.persistence.mysql.po.OaAnnouncementStatisticsPO">
+        SELECT announcement.id AS announcement_id,
+               COUNT(recipient.actor_id) AS recipient_total,
+               COUNT(receipt.actor_id) AS read_total
+        FROM oa_announcement announcement
+        LEFT JOIN oa_announcement_recipient recipient
+               ON recipient.tenant_id = announcement.tenant_id
+              AND recipient.announcement_id = announcement.id
+        LEFT JOIN oa_announcement_read_receipt receipt
+               ON receipt.tenant_id = recipient.tenant_id
+              AND receipt.announcement_id = recipient.announcement_id
+              AND receipt.actor_id = recipient.actor_id
+        WHERE announcement.tenant_id = #{tenantId}
+          AND announcement.id IN
+          <foreach collection="announcementIds" item="announcementId"
+                   open="(" separator="," close=")">
+              #{announcementId}
+          </foreach>
+        GROUP BY announcement.id
+    </select>
+
+    <select id="countUnread" resultType="long">
+        SELECT COUNT(*)
+        FROM oa_announcement_recipient recipient
+        INNER JOIN oa_announcement announcement
+                ON announcement.tenant_id = recipient.tenant_id
+               AND announcement.id = recipient.announcement_id
+               AND announcement.status = 'PUBLISHED'
+        INNER JOIN organization_membership membership
+                ON membership.tenant_id = recipient.tenant_id
+               AND membership.actor_id = recipient.actor_id
+               AND membership.status = 'ACTIVE'
+        LEFT JOIN oa_announcement_read_receipt receipt
+               ON receipt.tenant_id = recipient.tenant_id
+              AND receipt.announcement_id = recipient.announcement_id
+              AND receipt.actor_id = recipient.actor_id
+        WHERE recipient.tenant_id = #{tenantId}
+          AND recipient.actor_id = #{actorId}
+          AND receipt.actor_id IS NULL
+    </select>
+</mapper>

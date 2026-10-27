@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="io.github.archetom.crm.infra.persistence.mysql.mapper.WorklistAcknowledgementMapper">
+    <select id="selectAcknowledged"
+            resultType="io.github.archetom.crm.infra.persistence.mysql.po.WorklistAcknowledgementPO">
+        SELECT tenant_id, actor_id, kind, source_id, source_version, due_time,
+               version, created_time, updated_time
+          FROM worklist_acknowledgement
+         WHERE tenant_id = #{tenantId}
+           AND actor_id = #{actorId}
+           AND (kind, source_id, source_version, due_time) IN
+        <foreach collection="items" item="item" open="(" separator="," close=")">
+            (#{item.kind}, #{item.sourceId}, #{item.sourceVersion}, #{item.dueTime})
+        </foreach>
+    </select>
+</mapper>

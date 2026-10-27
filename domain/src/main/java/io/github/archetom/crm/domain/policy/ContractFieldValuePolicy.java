@@ -1,0 +1,33 @@
+package io.github.archetom.crm.domain.policy;
+
+import io.github.archetom.crm.domain.entity.ContractFieldValue;
+import io.github.archetom.crm.domain.entity.FieldDefinition;
+import io.github.archetom.crm.domain.entity.FilterCondition;
+import io.github.archetom.crm.domain.exception.ContractDomainException;
+
+import java.util.List;
+
+public final class ContractFieldValuePolicy {
+    private ContractFieldValuePolicy() {
+    }
+
+    public static ContractFieldValue normalize(
+            FieldDefinition field, List<String> values) {
+        try {
+            var normalized = OpportunityFieldValuePolicy.normalize(field, values);
+            return normalized == null ? null
+                    : new ContractFieldValue(normalized.fieldCode(), normalized.values());
+        } catch (RuntimeException exception) {
+            throw new ContractDomainException("contract custom field value is invalid");
+        }
+    }
+
+    public static FilterCondition normalizeFilterCondition(
+            FieldDefinition field, FilterCondition condition) {
+        try {
+            return OpportunityFieldValuePolicy.normalizeFilterCondition(field, condition);
+        } catch (RuntimeException exception) {
+            throw new ContractDomainException("contract filter condition is invalid");
+        }
+    }
+}

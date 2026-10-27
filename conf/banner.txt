@@ -1,0 +1,10 @@
+${AnsiColor.BRIGHT_GREEN}
+  ,---.     ,--.
+ /  O  \  ,-'  '-.  ,---.  ,--,--,--.
+|  .-.  | '-.  .-' | .-. | |        |
+|  | |  |   |  |   ' '-' ' |  |  |  |
+`--' `--'   `--'    `---'  `--`--`--'
+
+${AnsiColor.BLUE}
+Spring Boot Version: ${spring-boot.version}${spring-boot.formatted-version}
+${AnsiColor.DEFAULT}

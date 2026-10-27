@@ -1,0 +1,11 @@
+package io.github.archetom.crm.api.dto.response;
+
+import io.swagger.v3.oas.annotations.media.Schema;
+
+/** One record- and field-authorized value for a specialized stage input. */
+public record StageFieldCandidateResponse(
+        @Schema(requiredMode = Schema.RequiredMode.REQUIRED, minimum = "1") Long id,
+        @Schema(requiredMode = Schema.RequiredMode.REQUIRED) String displayName,
+        @Schema(requiredMode = Schema.RequiredMode.REQUIRED, allowableValues = {
+                "ACTOR_ID", "DEPARTMENT_ID", "RELATION_ID"}) String valueType) {
+}
