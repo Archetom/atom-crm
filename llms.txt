@@ -8,7 +8,8 @@ This is a retrieval index, not a full reading checklist. Open the current guide 
 
 - [Agent execution conventions](AGENTS.md): task workflow and repository invariants; apply these instructions without adding another full-document reading requirement.
 - [Chinese overview and quick start](README.md): environment, setup, commands, and product overview.
-- [English overview](README.en.md): English setup, commands, and module overview.
+- [English overview](README.en.md): English setup, commands, and product overview.
+- [Deployment](docs/deployment.md): build artifacts, containers, production setup, and upgrades.
 - [Architecture](docs/architecture.md): dependency ownership, request flow, tenancy, transactions, persistence, cache, and events.
 - [Object layering and naming](docs/object-layering.md): boundary types, aggregate reconstruction, and mapping ownership.
 - [Development workflow](docs/usage-guide.md): implementation patterns for use cases, persistence, migrations, and endpoints.
@@ -94,6 +95,7 @@ These are task-specific references. A design, simulator, or fixture does not by 
 - [B23-O/1 registry spike](docs/spikes/B23-official-open-registry.md): Companies House and GLEIF identity, policy, and adapter comparison.
 - [B23-O/2 source readiness](docs/B23-O-official-source-readiness.md): source qualification, policy evidence, quotas, and conformance design.
 - [B23-O-L2 durable simulator](docs/B23-O-L2-durable-simulator.md): test-only shared quota/readiness and restart scenarios.
+- [B23-O-L3 HTTP/security simulator](docs/B23-O-L3-http-security-simulator.md): offline transport and security scenarios.
 - [B23-XI registered identities](docs/B23-XI-registered-identity.md): identity normalization, tenant uniqueness, and Customer ownership design.
 - [B23-XP profile and provenance](docs/B23-XP-profile-provenance.md): canonical observations, policy, attribution, and retention design.
 - [B23-XF synthetic fixture](docs/B23-XF-composed-fixture.md): composed synthetic-source mapping, policy, and isolation scenarios.
@@ -112,6 +114,7 @@ These are task-specific references. A design, simulator, or fixture does not by 
 
 These records describe the checked revision and verification scope; they do not replace checks for the current change.
 
+- [Open-source readiness](docs/acceptance/open-source-readiness.md): backend/frontend build, installation, deployment, and publication checks.
 - [R1 acceptance](docs/acceptance/R1.md): 1.0.0 build, MySQL, security, and release-decision evidence.
 - [B18b/B19b review](docs/acceptance/B18b-B19b.md): dashboard and marketing-reporting review evidence.
 - [B19a review](docs/acceptance/B19a.md): marketing-form security, isolation, concurrency, and rate-limit evidence.
@@ -135,4 +138,15 @@ These records describe the checked revision and verification scope; they do not 
 - [B24d backend canary](docs/acceptance/B24d-real-backend-canary.md): partial real storage/inspection evidence and readiness limits.
 - [B25a Customer overview](docs/acceptance/B25a.md): independently authorized business-summary evidence.
 - [B26a automation](docs/acceptance/B26a.md): schedule/run, UTC, lease/fence, and reconciliation evidence.
+- [B27b task reminders](docs/acceptance/B27b.md): reminder escalation and in-app notification evidence.
+- [B27c notification delivery](docs/acceptance/B27c.md): reliable external-delivery kernel evidence.
+- [B28a scheduled announcements](docs/acceptance/B28a.md): one-shot publication evidence.
+- [B28b announcement email](docs/acceptance/B28b.md): reliable email-delivery integration evidence.
+- [B29a Product/ReturnVisit attachments](docs/acceptance/B29a.md): ordinary attachments and structured FILE evidence.
+- [B29b marketing-form files](docs/acceptance/B29b.md): anonymous drafts and atomic Lead binding evidence.
+- [B29c announcement attachments](docs/acceptance/B29c.md): frozen attachment sets and recipient download evidence.
+- [B29d OA request attachments](docs/acceptance/B29d.md): collaboration and approval-terminal freeze evidence.
+- [B30a Customer CSV export](docs/acceptance/B30a.md): bounded, permission-aware export evidence.
+- [B31a Contact CSV export](docs/acceptance/B31a.md): bounded, permission-aware export evidence.
 - [B32a opportunity pipelines](docs/acceptance/B32a.md): catalog lifecycle, migration, and relationship evidence.
+- [B33a Lead CSV export](docs/acceptance/B33a.md): bounded, permission-aware export evidence.
