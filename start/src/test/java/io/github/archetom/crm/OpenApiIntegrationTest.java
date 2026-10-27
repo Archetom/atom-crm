@@ -35,6 +35,20 @@ class OpenApiIntegrationTest extends BaseIntegrationTest {
     }
 
     @Test
+    void publishesOnlyExplicitSchemaDefaults() throws Exception {
+        mockMvc.perform(get("/v3/api-docs"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$['components']['schemas']['UserResponse']['properties']['username']['type']")
+                        .value("string"))
+                .andExpect(jsonPath("$['components']['schemas']['UserResponse']['properties']['username']['default']")
+                        .doesNotExist())
+                .andExpect(jsonPath("$['components']['schemas']['UserResponse']['properties']['status']['default']")
+                        .doesNotExist())
+                .andExpect(jsonPath("$['components']['schemas']['SavedViewConditionRequest']"
+                        + "['properties']['exposed']['default']").value(false));
+    }
+
+    @Test
     void publishesTypedOpportunityProductsReplacementContracts() throws Exception {
         mockMvc.perform(get("/v3/api-docs"))
                 .andExpect(status().isOk())
