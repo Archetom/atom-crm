@@ -5,7 +5,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>4.1.0</version>
+        <version>4.1.2</version>
     </parent>
 
     <modelVersion>4.0.0</modelVersion>
@@ -63,7 +63,7 @@
         <lombok.mapstruct.binding.version>0.2.0</lombok.mapstruct.binding.version>
 
         <!-- Architecture tests -->
-        <archunit.version>1.4.2</archunit.version>
+        <archunit.version>1.5.1</archunit.version>
 
         <!-- SpringDoc -->
         <springdoc.version>3.0.3</springdoc.version>

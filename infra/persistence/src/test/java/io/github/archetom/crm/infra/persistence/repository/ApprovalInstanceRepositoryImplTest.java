@@ -1,5 +1,6 @@
 package io.github.archetom.crm.infra.persistence.repository;
 
+import com.baomidou.mybatisplus.core.MybatisConfiguration;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.core.conditions.AbstractWrapper;
 import com.baomidou.mybatisplus.core.conditions.SharedString;
@@ -28,6 +29,7 @@ import io.github.archetom.crm.infra.persistence.mysql.po.ApprovalInstanceReferen
 import io.github.archetom.crm.infra.persistence.mysql.po.ApprovalInstancePO;
 import io.github.archetom.crm.infra.persistence.mysql.po.ApprovalSubjectStatusPO;
 import io.github.archetom.crm.infra.persistence.mysql.po.ApprovalTaskPO;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import tools.jackson.databind.ObjectMapper;
@@ -57,6 +59,17 @@ class ApprovalInstanceRepositoryImplTest {
     private MapperCalls managerCalls;
     private MapperCalls watcherCalls;
     private ApprovalInstanceRepositoryImpl repository;
+
+    @BeforeAll
+    static void initializeMapperMetadata() {
+        // The call-recording proxies below bypass MyBatis startup. Register the actual mappers
+        // so lambda wrappers have the same annotation-derived table/column metadata as production.
+        MybatisConfiguration configuration = new MybatisConfiguration();
+        configuration.addMapper(ApprovalInstanceMapper.class);
+        configuration.addMapper(ApprovalTaskMapper.class);
+        configuration.addMapper(ApprovalManagerMapper.class);
+        configuration.addMapper(ApprovalWatcherMapper.class);
+    }
 
     @BeforeEach
     void setUp() {
