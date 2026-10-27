@@ -50,7 +50,7 @@
         <project.build.outputTimestamp>2026-07-24T00:00:00Z</project.build.outputTimestamp>
 
         <!-- Common -->
-        <atom.common.version>1.0.0</atom.common.version>
+        <atom.common.version>1.1.0</atom.common.version>
 
         <!-- Maven Plugin -->
         <maven-dependency-plugin.version>3.11.0</maven-dependency-plugin.version>
