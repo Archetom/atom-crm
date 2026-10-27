@@ -7,8 +7,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.datasource.DriverManagerDataSource;
-import org.testcontainers.mysql.MySQLContainer;
-import org.testcontainers.utility.DockerImageName;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -152,12 +150,7 @@ class AttachmentPersistenceIntegrationTest extends BaseIntegrationTest {
 
     @Test
     void existingV58SchemaUpgradesThroughV61TypedAttachmentAndPauseMigrations() {
-        try (MySQLContainer upgradeDatabase = new MySQLContainer(DockerImageName.parse("mysql:9.7.1"))
-                .withDatabaseName("attachment_v58_upgrade")
-                .withUsername("upgrade_user")
-                .withPassword("upgrade_password")
-                .withStartupTimeout(Duration.ofMinutes(2))) {
-            upgradeDatabase.start();
+        try (MigrationTestDatabase upgradeDatabase = MigrationTestDatabase.create()) {
             Flyway.configure().dataSource(upgradeDatabase.getJdbcUrl(), upgradeDatabase.getUsername(),
                     upgradeDatabase.getPassword()).locations("classpath:db/migration").target("58").load().migrate();
             JdbcTemplate upgradeJdbc = new JdbcTemplate(new DriverManagerDataSource(upgradeDatabase.getJdbcUrl(),

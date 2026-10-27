@@ -30,6 +30,14 @@ sh ./mvnw test
 
 The checked-in GitHub Actions workflow runs `sh scripts/release-verify.sh` (also exposed as `make release-verify`) for every pull request and every push to `main`; it can also be triggered manually. Release verification requires a working Docker daemon, checks release metadata, runs a clean Maven install, and inspects the resulting Surefire XML. Every database test class discovered from `@RequiresDatabase` or `BaseIntegrationTest` must have executed cases with no skips, errors or failures; missing reports also fail the release gate. Local `make test` and `make integration-test` retain the automatic Docker gate; use the explicit skip property above for a fast run.
 
+CI sets `ATOM_TEST_FORKS=2` to run the `start` module in two reused Surefire JVMs, each with a 2 GiB heap limit, its own MySQL containers and Spring context cache. Tests within each JVM stay sequential because they share the application schema. Local runs default to one JVM; reproduce CI with `ATOM_TEST_FORKS=2 make release-verify`, or use `-Datom.test.forks=2` for a direct Maven run. Other modules retain their existing execution settings.
+
+Migration upgrade tests share a separate MySQL server within each JVM. Every scenario creates a fresh schema and schema-scoped user, runs its original Flyway upgrade sequence, then drops that schema and user. This avoids repeatedly booting MySQL while preserving independent data and migration history. Testcontainers removes the servers when the JVM exits; containers and database contents are never reused across builds.
+
+Both test servers put their disposable MySQL data directories on `tmpfs`, capped at 1 GiB per server, to avoid host-disk flush costs. MySQL transaction, locking and constraint settings remain unchanged. Allow enough Docker memory for these mounts as well as the MySQL processes; application and production storage configuration is unaffected.
+
+The Maven launcher uses a 4 MiB thread stack from `.mvn/jvm.config` to give the in-process Java compiler headroom after a `StackOverflowError` observed while compiling the REST module in CI. This setting does not change the deployed application's JVM options.
+
 The report verifier uses the existing JDK 25 source launcher and needs no additional runtime. Its fixture self-tests cover missing/empty reports, partial and complete skips, failures, parameterized/dynamic and nested cases, and malformed or unsafe XML:
 
 ```bash

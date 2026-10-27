@@ -59,6 +59,8 @@ public abstract class BaseIntegrationTest {
             .withDatabaseName("test_db")
             .withUsername("test_user")
             .withPassword("test_password")
+            // Test data lives only for this JVM; avoid host-disk flushes for disposable fixtures.
+            .withTmpFs(Map.of("/var/lib/mysql", "rw,size=1g"))
             .withStartupTimeout(Duration.ofMinutes(2));
 
     static {

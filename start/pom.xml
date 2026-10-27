@@ -17,6 +17,8 @@
     <properties>
         <!-- Required for Surefire's late @{argLine} replacement. -->
         <argLine/>
+        <atom.test.forks>1</atom.test.forks>
+        <atom.test.maxHeap>2g</atom.test.maxHeap>
     </properties>
 
     <dependencies>
@@ -105,7 +107,15 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <configuration>
-                    <argLine>@{argLine} -javaagent:&#36;{org.mockito:mockito-core:jar}</argLine>
+                    <argLine>@{argLine} -Xmx${atom.test.maxHeap} -javaagent:&#36;{org.mockito:mockito-core:jar}</argLine>
+                    <!-- Each reused JVM owns its MySQL containers and Spring context cache. -->
+                    <forkCount>${atom.test.forks}</forkCount>
+                    <reuseForks>true</reuseForks>
+                    <systemPropertyVariables>
+                        <!-- Classes in one JVM share a schema and must remain sequential. -->
+                        <junit.jupiter.execution.parallel.enabled>false</junit.jupiter.execution.parallel.enabled>
+                        <logging.file.path>${project.build.directory}/test-logs/fork-${surefire.forkNumber}</logging.file.path>
+                    </systemPropertyVariables>
                 </configuration>
             </plugin>
             <plugin>

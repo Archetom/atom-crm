@@ -41,6 +41,7 @@ jobs:
         env:
           CI: "true"
           EXPECTED_VERSION: "1.0.0"
+          ATOM_TEST_FORKS: "2"
         run: sh scripts/release-verify.sh
       - name: Build runtime image from verified artifact
         run: docker build --tag atom-crm:ci .

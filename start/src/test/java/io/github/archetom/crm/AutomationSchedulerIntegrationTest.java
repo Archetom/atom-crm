@@ -6,6 +6,8 @@ import io.github.archetom.crm.application.automation.AutomationLeaseLostExceptio
 import io.github.archetom.crm.application.automation.AutomationOutcome;
 import io.github.archetom.crm.application.automation.AutomationPolicy;
 import io.github.archetom.crm.application.port.out.automation.AutomationScheduleStore;
+import io.github.archetom.crm.application.port.out.automation.WorkRecurrenceControlStore;
+import io.github.archetom.crm.application.properties.WorkRecurrenceProperties;
 import io.github.archetom.crm.domain.valueobject.TenantId;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,6 +27,8 @@ class AutomationSchedulerIntegrationTest extends BaseIntegrationTest {
     private static final long TENANT = 9_260_001L;
 
     @Autowired private AutomationScheduleStore schedules;
+    @Autowired private WorkRecurrenceControlStore recurrenceControl;
+    @Autowired private WorkRecurrenceProperties recurrenceProperties;
     @Autowired private PlatformTransactionManager transactionManager;
 
     @Test
@@ -87,6 +91,8 @@ class AutomationSchedulerIntegrationTest extends BaseIntegrationTest {
         AutomationPolicy policy = policy();
         TenantId tenantId = new TenantId(tenant);
         TransactionTemplate tx = new TransactionTemplate(transactionManager);
+        // This scenario owns its readiness fixture, including when run in a fresh test JVM.
+        assertEquals("READY", recurrenceControl.reconcile(recurrenceProperties.policy()).name());
         activate(tx, tenantId, AutomationKind.WORK_TASK_RECURRENCE, policy);
         assertTrue(schedules.materializeOne(policy).isPresent());
         AutomationExecutionContext context = schedules.claimOne(policy, UUID.randomUUID()).context().orElseThrow();
