@@ -32,7 +32,7 @@ jobs:
       - uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
         with:
           distribution: jdkfile
-          jdkFile: ${{ runner.temp }}/temurin-jdk.tar.gz
+          jdk-file: ${{ runner.temp }}/temurin-jdk.tar.gz
           java-version: "27.0.1.0.2+1"
           cache: maven
           cache-dependency-path: |
