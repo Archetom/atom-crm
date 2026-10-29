@@ -75,5 +75,6 @@ if git rev-parse --verify HEAD^ >/dev/null 2>&1; then
     git diff --check HEAD^ HEAD
 fi
 CI=true sh ./mvnw --batch-mode --no-transfer-progress clean install \
-    "-Datom.test.forks=${ATOM_TEST_FORKS}"
+    "-Datom.test.forks=${ATOM_TEST_FORKS}" \
+    -Datom.test.skip-database-tests=false
 java scripts/VerifyDatabaseTests.java

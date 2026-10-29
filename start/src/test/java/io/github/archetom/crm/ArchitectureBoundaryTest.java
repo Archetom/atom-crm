@@ -4,7 +4,7 @@ import com.tngtech.archunit.core.domain.JavaClass;
 import com.tngtech.archunit.core.domain.JavaClasses;
 import com.tngtech.archunit.core.domain.JavaModifier;
 import com.tngtech.archunit.core.importer.ClassFileImporter;
-import com.tngtech.archunit.core.importer.ImportOption;
+import com.tngtech.archunit.core.importer.Location;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
@@ -20,7 +20,7 @@ class ArchitectureBoundaryTest {
     @Test
     void compiledArchitectureRespectsBoundaries() {
         JavaClasses classes = new ClassFileImporter()
-                .withImportOption(ImportOption.Predefined.DO_NOT_INCLUDE_TESTS)
+                .withImportOption(ArchitectureBoundaryTest::isProductionLocation)
                 .importPackages(ROOT_PACKAGE);
         List<String> violations = new ArrayList<>();
 
@@ -36,6 +36,7 @@ class ArchitectureBoundaryTest {
             inspectDependencies(source, violations);
             inspectAttachmentDependencies(source, violations);
             inspectEntityMethods(source, violations);
+            inspectPersistenceObjects(source, violations);
             inspectNaming(source, violations);
         }
 
@@ -43,13 +44,21 @@ class ArchitectureBoundaryTest {
                 + String.join("\n", violations));
     }
 
+    static boolean isProductionLocation(Location location) {
+        // The archetype IT nests the whole reactor below an outer target/test-classes.
+        // Only the innermost Maven output directory identifies production vs test code.
+        String uri = location.asURI().toString();
+        return location.isJar() || uri.lastIndexOf("/target/test-classes/") < 0
+                || uri.lastIndexOf("/target/classes/") > uri.lastIndexOf("/target/test-classes/");
+    }
+
     /** B24a files must terminate servlet/filesystem/provider details at their owning adapters. */
-    private static void inspectAttachmentDependencies(JavaClass source, List<String> violations) {
+    static void inspectAttachmentDependencies(JavaClass source, List<String> violations) {
         String packageName = source.getPackageName();
         boolean attachmentCore = source.getSimpleName().startsWith("Attachment")
-                && (packageName.startsWith(ROOT_PACKAGE + ".domain")
-                || packageName.startsWith(ROOT_PACKAGE + ".application")
-                || packageName.startsWith(ROOT_PACKAGE + ".api"));
+                && (inPackage(packageName, ROOT_PACKAGE + ".domain")
+                || inPackage(packageName, ROOT_PACKAGE + ".application")
+                || inPackage(packageName, ROOT_PACKAGE + ".api"));
         if (!attachmentCore) return;
         List<String> forbidden = List.of("jakarta.servlet.", "javax.servlet.", "java.nio.file.",
                 "java.io.File", "java.net.URL", "java.net.URI", "org.springframework.web.multipart.",
@@ -62,7 +71,7 @@ class ArchitectureBoundaryTest {
         });
     }
 
-    private static void inspectDependencies(JavaClass source, List<String> violations) {
+    static void inspectDependencies(JavaClass source, List<String> violations) {
         String sourcePackage = source.getPackageName();
         List<String> forbidden = forbiddenDependencies(sourcePackage);
         source.getDirectDependenciesFromSelf().forEach(dependency -> {
@@ -70,57 +79,93 @@ class ArchitectureBoundaryTest {
             if (forbidden.stream().anyMatch(target::startsWith)) {
                 violations.add(source.getName() + " -> " + target);
             }
-            if (sourcePackage.startsWith(ROOT_PACKAGE + ".infra.rest.controller")
+            if ((inPackage(sourcePackage, ROOT_PACKAGE + ".infra.rest.controller")
+                    || source.isAnnotatedWith("org.springframework.stereotype.Controller")
+                    || source.isMetaAnnotatedWith("org.springframework.stereotype.Controller"))
                     && (target.startsWith(ROOT_PACKAGE + ".domain.repository.")
-                    || target.startsWith(ROOT_PACKAGE + ".infra.persistence.repository.")
+                    || target.startsWith(ROOT_PACKAGE + ".domain.entity.")
+                    || target.startsWith(ROOT_PACKAGE + ".domain.aggregate.")
+                    || target.startsWith(ROOT_PACKAGE + ".infra.persistence.")
                     || target.startsWith(ROOT_PACKAGE + ".application.vo."))) {
                 violations.add("REST controller bypasses facade/use-case boundary: "
+                        + source.getName() + " -> " + target);
+            }
+            if (inPackage(sourcePackage, ROOT_PACKAGE + ".infra.grpc")
+                    && (target.startsWith(ROOT_PACKAGE + ".domain.")
+                    || target.startsWith(ROOT_PACKAGE + ".application.")
+                    || target.startsWith(ROOT_PACKAGE + ".infra.persistence.")
+                    || target.startsWith(ROOT_PACKAGE + ".infra.rest."))) {
+                violations.add("gRPC adapter bypasses the facade boundary: "
                         + source.getName() + " -> " + target);
             }
         });
     }
 
     private static List<String> forbiddenDependencies(String sourcePackage) {
-        if (sourcePackage.startsWith(ROOT_PACKAGE + ".domain")) {
+        if (inPackage(sourcePackage, ROOT_PACKAGE + ".domain")) {
             return List.of(
                     ROOT_PACKAGE + ".api.", ROOT_PACKAGE + ".application.",
                     ROOT_PACKAGE + ".shared.", ROOT_PACKAGE + ".infra.",
-                    "org.springframework.", "org.mybatis.", "com.baomidou.");
+                    "org.springframework.", "org.mybatis.", "com.baomidou.",
+                    "java.net.http.", "java.sql.", "javax.sql.",
+                    "jakarta.persistence.", "javax.persistence.",
+                    "jakarta.servlet.", "javax.servlet.",
+                    "org.apache.http.", "org.apache.hc.", "okhttp3.",
+                    "io.grpc.", "io.netty.", "reactor.netty.",
+                    "redis.clients.", "io.lettuce.", "org.redisson.");
         }
-        if (sourcePackage.startsWith(ROOT_PACKAGE + ".api")) {
+        if (inPackage(sourcePackage, ROOT_PACKAGE + ".api")) {
             return List.of(
                     ROOT_PACKAGE + ".application.", ROOT_PACKAGE + ".domain.",
                     ROOT_PACKAGE + ".infra.", "org.springframework.",
                     "org.mybatis.", "com.baomidou.");
         }
-        if (sourcePackage.startsWith(ROOT_PACKAGE + ".shared")) {
+        if (inPackage(sourcePackage, ROOT_PACKAGE + ".shared")) {
             return List.of(
                     ROOT_PACKAGE + ".api.", ROOT_PACKAGE + ".application.",
                     ROOT_PACKAGE + ".domain.", ROOT_PACKAGE + ".infra.",
                     "org.springframework.", "org.mybatis.", "com.baomidou.");
         }
-        if (sourcePackage.startsWith(ROOT_PACKAGE + ".application")) {
+        if (inPackage(sourcePackage, ROOT_PACKAGE + ".application")) {
             return List.of(
                     ROOT_PACKAGE + ".infra.", "org.springframework.data.",
                     "org.springframework.web.", "org.mybatis.",
                     "com.baomidou.", "reactor.netty.");
         }
-        if (sourcePackage.startsWith(ROOT_PACKAGE + ".infra.facade")) {
+        if (inPackage(sourcePackage, ROOT_PACKAGE + ".infra.facade")) {
             return List.of(ROOT_PACKAGE + ".domain.",
                     ROOT_PACKAGE + ".infra.persistence.");
         }
         return List.of();
     }
 
-    private static void inspectEntityMethods(JavaClass source, List<String> violations) {
-        if (!source.getPackageName().startsWith(ROOT_PACKAGE + ".domain.entity")) {
+    static void inspectEntityMethods(JavaClass source, List<String> violations) {
+        if (!inPackage(source.getPackageName(), ROOT_PACKAGE + ".domain.entity")
+                && !source.isAssignableTo(ROOT_PACKAGE + ".domain.aggregate.AggregateRoot")) {
             return;
         }
-        source.getMethods().stream()
-                .filter(method -> method.getOwner().equals(source))
+        source.getAllMethods().stream()
                 .filter(method -> method.getModifiers().contains(JavaModifier.PUBLIC))
                 .filter(method -> method.getName().matches("set[A-Z].*"))
                 .forEach(method -> violations.add("Domain entity exposes public setter: " + method.getFullName()));
+    }
+
+    static void inspectPersistenceObjects(JavaClass source, List<String> violations) {
+        if (!inPackage(source.getPackageName(), ROOT_PACKAGE + ".infra.persistence.mysql.po")
+                || source.getSimpleName().equals("package-info")) {
+            return;
+        }
+        // CRM child rows, actor-global records and control-plane/query projections deliberately
+        // have different identity/version fields; they do not all inherit the tenant BasePO.
+        // Their SQL representation must still remain independent of domain objects.
+        source.getDirectDependenciesFromSelf().stream()
+                .filter(dependency -> dependency.getTargetClass().getName().startsWith(ROOT_PACKAGE + ".domain."))
+                .forEach(dependency -> violations.add("Persistence object leaks domain type: "
+                        + dependency.getDescription()));
+    }
+
+    private static boolean inPackage(String actual, String expected) {
+        return actual.equals(expected) || actual.startsWith(expected + ".");
     }
 
     /**
@@ -128,7 +173,7 @@ class ArchitectureBoundaryTest {
      * enclosing type rather than named independently, and anonymous ones have no simple name at
      * all, so they are not carriers of the role a package suffix expresses.
      */
-    private static void inspectNaming(JavaClass source, List<String> violations) {
+    static void inspectNaming(JavaClass source, List<String> violations) {
         if (source.getSimpleName().equals("package-info") || source.isNestedClass()) {
             return;
         }
@@ -147,7 +192,7 @@ class ArchitectureBoundaryTest {
 
     private static void requireSuffix(
             JavaClass source, String packageSuffix, List<String> violations, String... nameSuffixes) {
-        if (!source.getPackageName().startsWith(ROOT_PACKAGE + packageSuffix) || source.isEnum()) {
+        if (!inPackage(source.getPackageName(), ROOT_PACKAGE + packageSuffix) || source.isEnum()) {
             return;
         }
         if (packageSuffix.equals(".api.dto.response") && source.getSimpleName().endsWith("Result")) {

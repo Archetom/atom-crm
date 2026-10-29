@@ -1,6 +1,6 @@
 # atom-crm
 
-An open-source CRM backend built with Java 25 and Spring Boot 4.1, using domain-driven design and a multi-module architecture.
+An open-source CRM backend built with Java 27 and Spring Boot 4.1.2, using domain-driven design and a multi-module architecture.
 
 [简体中文](README.md) · [Quick start](#quick-start) · [Documentation](#documentation) · [Web frontend](https://github.com/Archetom/atom-crm-web)
 
@@ -18,9 +18,9 @@ This repository provides the backend API. The browser application lives in [atom
 
 ### Requirements
 
-- JDK 25
+- JDK 27 (non-LTS; required for both build and runtime)
 - Docker and Docker Compose
-- The Maven Wrapper is included; no separate Maven installation is needed. Redis is optional and disabled by default.
+- Maven Wrapper 3.10.0 is included; no separate Maven installation is needed. Redis is optional and disabled by default.
 
 ### Start the backend
 
@@ -29,7 +29,7 @@ git clone https://github.com/Archetom/atom-crm.git
 cd atom-crm
 docker compose up -d mysql
 sh ./mvnw clean install
-sh ./mvnw -f start/pom.xml spring-boot:run -Dspring-boot.run.profiles=dev
+sh ./mvnw -pl start -am spring-boot:run -Dspring-boot.run.profiles=dev
 ```
 
 Once running, open the [health endpoint](http://localhost:8080/actuator/health) or [Swagger UI](http://localhost:8080/swagger-ui/index.html). Local settings are in [`conf/application-dev.yml`](conf/application-dev.yml).
@@ -51,12 +51,15 @@ These steps are for local development. See the [deployment guide](docs/deploymen
 
 ## Development and testing
 
+The engineering baseline incorporates Atom Archetype 2.3.0 and atom-common 1.2.0. CRM business modules, identity/authorization contracts, and database migration history remain independently maintained. Read [AGENTS.md](AGENTS.md) for development rules and the [task index](llms.txt#task-workflows) for five workflows to use as needed.
+
 ```bash
-sh ./mvnw test                                        # Includes MySQL integration tests when Docker is available
-sh ./mvnw test -Datom.test.skip-database-tests=true    # Explicitly skips database tests
+make agent-check SCOPE=fast       # Explicitly skips database tests
+make agent-check SCOPE=affected   # Selects checks conservatively from Git changes
+make agent-check                 # Default full scope requires Docker and complete database evidence
 ```
 
-Database tests are skipped when Docker is unavailable. See the [testing guide](docs/test-guide.md) for full verification requirements.
+The entry point writes JSON to standard output and detailed logs to standard error; missing required Docker support returns a blocked result and a nonzero exit code. Direct `sh ./mvnw test` still skips database tests when Docker is unavailable; `CI=true/false` does not control this behavior, while `-Datom.test.skip-database-tests=true` explicitly skips them. Passing fast tests does not establish database coverage. See the [testing guide](docs/test-guide.md).
 
 ## Documentation
 
@@ -68,6 +71,7 @@ Database tests are skipped when Docker is unavailable. See the [testing guide](d
 | [Architecture](docs/architecture.md) | Module responsibilities, domain model, and transactions |
 | [Development](docs/usage-guide.md) | Adding use cases, endpoints, and migrations |
 | [Testing](docs/test-guide.md) | Test layers and verification commands |
+| [Domain contracts](docs/domain/README.md) | Optional business facts, open assumptions, and executable invariants |
 
 [Changelog](CHANGELOG.md) · [1.0.0 deployment and releases](docs/deployment.md) · [Full documentation index](llms.txt)
 

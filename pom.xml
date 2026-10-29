@@ -14,7 +14,7 @@
     <packaging>pom</packaging>
     <version>1.0.0</version>
     <name>atom-crm</name>
-    <description>atom-crm: Java 25 and Spring Boot 4.1 application with Domain-Driven Design boundaries</description>
+    <description>atom-crm: Java 27 and Spring Boot 4.1 application with Domain-Driven Design boundaries</description>
     <url>https://github.com/Archetom/atom-crm</url>
 
     <scm>
@@ -45,18 +45,44 @@
     </modules>
 
     <properties>
-        <java.version>25</java.version>
-        <maven.minimum.version>3.9.0</maven.minimum.version>
+        <java.version>27</java.version>
+        <maven.minimum.version>3.10.0</maven.minimum.version>
         <project.build.outputTimestamp>2026-07-24T00:00:00Z</project.build.outputTimestamp>
 
         <!-- Common -->
-        <atom.common.version>1.0.0</atom.common.version>
+        <atom.common.version>1.2.0</atom.common.version>
 
-        <!-- Maven Plugin -->
+        <!-- Maven plugins newer than the Spring Boot defaults. -->
+        <maven-compiler-plugin.version>3.16.0</maven-compiler-plugin.version>
         <maven-dependency-plugin.version>3.11.0</maven-dependency-plugin.version>
+        <maven-deploy-plugin.version>3.2.0</maven-deploy-plugin.version>
+        <maven-install-plugin.version>3.2.0</maven-install-plugin.version>
+        <maven-surefire-plugin.version>3.6.1</maven-surefire-plugin.version>
+        <maven-failsafe-plugin.version>3.6.1</maven-failsafe-plugin.version>
+        <versions-maven-plugin.version>2.23.0</versions-maven-plugin.version>
+
+        <!-- Third-party releases newer than the Spring Boot BOM. Keep each library family aligned. -->
+        <commons-lang3.version>3.21.0</commons-lang3.version>
+        <jackson-bom.version>3.2.4</jackson-bom.version>
+        <jackson-2-bom.version>2.22.4</jackson-2-bom.version>
+        <logback.version>1.6.6</logback.version>
+        <lettuce.version>7.9.0.RELEASE</lettuce.version>
+        <snakeyaml.version>2.7</snakeyaml.version>
+        <gson.version>2.15.0</gson.version>
+
+        <!-- Test libraries; Mockito's agent and Byte Buddy must support the Java baseline. -->
+        <junit-jupiter.version>6.1.3</junit-jupiter.version>
+        <mockito.version>5.24.0</mockito.version>
+        <byte-buddy.version>1.18.16</byte-buddy.version>
+        <json-path.version>3.0.0</json-path.version>
+        <xmlunit2.version>2.14.0</xmlunit2.version>
 
         <!-- Database -->
-        <mybatis.plus.version>3.5.17</mybatis.plus.version>
+        <flyway.version>13.11.1</flyway.version>
+        <mysql.version>26.10.0</mysql.version>
+        <hikaricp.version>7.1.0</hikaricp.version>
+        <!-- Keep MyBatis at the version supplied by MyBatis-Plus: 3.6.0 removes APIs it still calls. -->
+        <mybatis.plus.version>3.5.18</mybatis.plus.version>
 
         <!-- MapStruct -->
         <mapstruct.version>1.6.3</mapstruct.version>
@@ -66,8 +92,12 @@
         <archunit.version>1.5.1</archunit.version>
 
         <!-- SpringDoc -->
-        <springdoc.version>3.1.1</springdoc.version>
+        <springdoc.version>3.2.0</springdoc.version>
         <swagger.annotations.version>2.2.55</swagger.annotations.version>
+
+        <!-- Google libraries shared by atom-common and protobuf; pinned for dependency convergence. -->
+        <guava.version>33.7.2-jre</guava.version>
+        <error-prone-annotations.version>2.51.0</error-prone-annotations.version>
     </properties>
 
     <!-- The root POM owns dependency versions; each module declares what it uses directly. -->
@@ -111,6 +141,18 @@
                 <groupId>io.swagger.core.v3</groupId>
                 <artifactId>swagger-annotations-jakarta</artifactId>
                 <version>${swagger.annotations.version}</version>
+            </dependency>
+
+            <!-- Converged Google libraries; keep at or above the versions atom-common requires. -->
+            <dependency>
+                <groupId>com.google.guava</groupId>
+                <artifactId>guava</artifactId>
+                <version>${guava.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.google.errorprone</groupId>
+                <artifactId>error_prone_annotations</artifactId>
+                <version>${error-prone-annotations.version}</version>
             </dependency>
 
             <!-- Project Modules -->
@@ -173,6 +215,10 @@
                 <plugin>
                     <groupId>org.springframework.boot</groupId>
                     <artifactId>spring-boot-maven-plugin</artifactId>
+                    <configuration>
+                        <!-- Only start is runnable; include upstream modules in reactor runs. -->
+                        <skip>true</skip>
+                    </configuration>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
@@ -205,7 +251,6 @@
                     </configuration>
                     <executions>
                         <execution>
-                            <phase>compile</phase>
                             <goals>
                                 <goal>jar-no-fork</goal>
                             </goals>

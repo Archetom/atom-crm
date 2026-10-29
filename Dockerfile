@@ -1,4 +1,4 @@
-FROM eclipse-temurin:25-jre
+FROM eclipse-temurin:27-jre
 
 WORKDIR /app
 RUN mkdir -p /app/logs && chown -R 10001:10001 /app

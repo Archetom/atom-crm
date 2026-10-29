@@ -1,6 +1,6 @@
 # atom-crm
 
-> Java 25 / Spring Boot 4.1 multi-module CRM; Maven coordinates `io.github.archetom:atom-crm:1.0.0`.
+> Java 27 / Spring Boot 4.1.2 multi-module CRM; Maven coordinates `io.github.archetom:atom-crm:1.0.0`. Engineering baseline: Atom Archetype 2.3.0, Maven Wrapper 3.10.0, atom-common 1.2.0.
 
 Use the current guides below, then inspect the relevant implementation and tests with `rg`.
 
@@ -25,6 +25,15 @@ Use the current guides below, then inspect the relevant implementation and tests
 - [Connector and call integration](docs/connector-integration.md): connector identity, durability, privacy, and deployment prerequisites.
 - [Enterprise data](docs/enterprise-data.md): source qualification, policy, quota, provenance, and customer adoption.
 - [Files and attachments](docs/file-storage.md): storage, inspection, access control, and deployment verification.
+- [Domain contracts](docs/domain/README.md): lightweight business facts, assumptions, invariants, and test evidence; existing feature guides remain authoritative.
+
+## Task workflows
+
+- [Create a feature](.agents/skills/create-feature/SKILL.md): CRM use cases, minimal DDD objects, current authorization, and tests.
+- [Add an HTTP API](.agents/skills/add-api/SKILL.md): verified human/connector identity, membership and field policy, OpenAPI, and API tests.
+- [Add a migration](.agents/skills/add-migration/SKILL.md): forward-only Flyway changes, mappings, upgrade compatibility, and MySQL evidence.
+- [Review architecture](.agents/skills/review-architecture/SKILL.md): actual CRM boundaries, scope exceptions, aggregate and transaction contracts.
+- [Verify a change](.agents/skills/verify-change/SKILL.md): scope selection, explicit database-test gating, and truthful check/report evidence.
 
 ## Module map
 
@@ -45,9 +54,11 @@ Dependencies point inward: adapters -> application -> domain; `start` composes t
 
 ## Verification
 
-- Focused tests: `sh ./mvnw -pl <module> -am test`.
-- Explicit suite without database tests: `sh ./mvnw test -Datom.test.skip-database-tests=true`.
+- Focused fast tests: `sh ./mvnw -pl <module> -am test -Datom.test.skip-database-tests=true`.
+- Explicit suite without database tests: `make agent-check SCOPE=fast`.
+- Conservative Git-based selection: `make agent-check SCOPE=affected`; uncertain or sensitive changes select full checks.
+- Full validation: `make agent-check` (default `full`), requiring Docker, `clean install`, and verified database reports.
 - Default suite: `sh ./mvnw test`; MySQL tests run when Docker is available and skip otherwise.
 - Release verification: `make release-verify`; requires Docker, runs `clean install`, and rejects missing, skipped, or failed database tests.
 
-For security, tenancy, database, transaction, mapper, cache, or event changes, verify that the relevant MySQL tests actually ran. Use the public test reports for the revision being reviewed.
+For security, tenancy, database, transaction, mapper, cache, or event changes, verify that the relevant MySQL tests actually ran. `CI=true/false` is not a database-test gate in CRM; explicit skipping uses `atom.test.skip-database-tests=true`. Use the test reports for the revision being reviewed, and preserve the existing application contracts when consulting archetype references.

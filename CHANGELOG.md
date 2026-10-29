@@ -6,11 +6,20 @@ User-visible changes are recorded here. A section in this file is not proof that
 
 ### Added
 
+- Strengthen executable architecture guards and add regression fixtures while preserving CRM-specific facade, attachment, naming, and persistence-model boundaries.
+- Add five CRM-adapted Agent Skills, a generic domain-contract guide, and `make agent-check` with explicit fast/full checks, conservative affected-change selection, and structured results. Full checks retain the existing Docker and database-report gate.
 - Provide an explicitly configured SMTP adapter for user welcome notifications in production. Production still requires a real notification adapter; the development logging adapter does not claim delivery.
 - Add a non-root backend runtime container image definition and a production environment-variable example.
 
+### Changed
+
+- Align engineering tooling with Atom Archetype 2.3.0 while retaining CRM business modules, human/connector identity contracts, and database migration history.
+- **Breaking toolchain change:** require Java 27 for builds and runtime, Maven 3.10.0, and atom-common 1.2.0. Spring Boot remains on 4.1.2; application versioning remains independent of the archetype.
+- Run the development application from the Maven reactor so dependent modules are rebuilt from current sources.
+
 ### Fixed
 
+- Restore the configured database-test skip flag after condition tests so a fast run cannot accidentally enable later MySQL tests.
 - Exclude local configuration and environment files from packaged application resources.
 - Resolve the SMTP password-reset adapter after mail auto-configuration; explicitly enabling recovery without an SMTP sender now fails startup instead of silently omitting delivery.
 - Require Docker and actual, unskipped MySQL test evidence in the release gate; pin CI actions, retain reports, and configure dependency update checks.

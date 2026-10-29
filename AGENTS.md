@@ -1,6 +1,6 @@
 # AGENTS.md
 
-Java 25 / Spring Boot 4.1 CRM. Complete and verify changes within these boundaries.
+Java 27 / Spring Boot 4.1.2 CRM, with Maven Wrapper 3.10.0 and atom-common 1.2.0. Engineering tooling follows Atom Archetype 2.3.0; this guide owns the CRM-specific contracts. Complete and verify changes within these boundaries.
 
 ## Execution and context
 
@@ -24,12 +24,14 @@ Java 25 / Spring Boot 4.1 CRM. Complete and verify changes within these boundari
 - Read invoked/relevant `SKILL.md` and needed references. User instructions override skill defaults.
 - Store workflows in `.agents/skills/<name>/SKILL.md` with triggers, inputs, outputs and checks. Keep invariants here, contracts in docs; avoid duplication.
 - If a skill blocks work/changes scope, cite the exact file/instruction and why it applies. Do not infer approval requirements from suggestions.
+- Use [create-feature](.agents/skills/create-feature/SKILL.md), [add-api](.agents/skills/add-api/SKILL.md), [add-migration](.agents/skills/add-migration/SKILL.md), [review-architecture](.agents/skills/review-architecture/SKILL.md), or [verify-change](.agents/skills/verify-change/SKILL.md) for the matching task. Record non-obvious business decisions using the optional [domain-contract guide](docs/domain/README.md); keep existing feature contracts in their maintained guides.
 
 ## Architecture and naming
 
 - Dependencies: adapters -> application -> domain. `domain` cannot import `api`, `application`, `shared`, `infra`, Spring, servlet, MyBatis or Redis.
 - `application` owns orchestration/output ports; infra owns adapters/technology types; `start` composes them. `shared` has no domain concepts.
 - Controllers use facade/use-case boundaries, never repositories/application VOs directly. Preserve streaming/export services and packages.
+- `api.context.AuthenticatedCaller` and `AuthenticatedConnector` are trusted server-side subjects used by the existing facade contracts. REST maps verified authentication through the matching caller/connector mapper; request DTOs cannot construct these subjects.
 - Use API `*Request`/`*Response`, application `*VO`, persistence `*PO`/`*POConverter`; API mapping uses `*Assembler`. Name ports by capability; avoid `I*`, concrete `Abstract*` beans and vague `Manager`/`Helper`/`Data`/`Model`.
 - Use command/query templates below. Keep `UseCaseOperation` in `application/operation` with stable operation/error-code scenes.
 
@@ -54,19 +56,21 @@ Java 25 / Spring Boot 4.1 CRM. Complete and verify changes within these boundari
 
 ## Verification and completion
 
-Run from the root with JDK 25/Maven Wrapper:
+Run from the root with JDK 27/Maven Wrapper 3.10.0:
 
 | Change / purpose | Verification |
 | --- | --- |
 | Docs/instructions | Links, paths/commands, stale guidance, `git diff --check`; no Maven build |
 | Focused behavior | `sh ./mvnw -pl <module> -am test -Datom.test.skip-database-tests=true` |
-| Cross-module contract | Focused tests, then `sh ./mvnw test -Datom.test.skip-database-tests=true` |
-| Database/security/transaction/mapper/cache/event boundary | Docker + `sh ./mvnw test`; confirm relevant MySQL tests ran |
+| Cross-module contract | Focused tests, then `make agent-check SCOPE=fast` |
+| Database/security/transaction/mapper/cache/event boundary | `make agent-check SCOPE=full`; requires Docker and verifies actual MySQL test execution |
 | Build/release | `sh ./mvnw clean install` / `make release-verify` |
 
-Modules: `domain`, `shared`, `application`, `infra/persistence`, `infra/rest`, `start`. Single-class runs add `-Dtest=<TestClass> -Dsurefire.failIfNoSpecifiedTests=false`.
+Modules: `api`, `domain`, `shared`, `application`, `infra/external`, `infra/security`, `infra/persistence`, `infra/rest`, `infra/facade`, `start`. Single-class runs add `-Dtest=<TestClass> -Dsurefire.failIfNoSpecifiedTests=false`.
 
 `sh ./mvnw test` runs MySQL Testcontainers tests if Docker is usable, otherwise skips them. `-Datom.test.skip-database-tests=true` explicitly skips; `CI=true/false` does not gate them. Build success with skipped tests is not database verification.
+
+`make agent-check` defaults to `full`: the existing release gate requires Docker, runs `clean install` with database skipping disabled, and checks reports with `scripts/VerifyDatabaseTests.java`. `fast` explicitly skips database tests; `docs` checks Git whitespace. Opt-in `affected` uses Git changes to select conservative checks, falling back to full for production, sensitive, cross-module, unknown, or unavailable change context. Its optional Python 3 selector also falls back to full when unavailable. Read the JSON scope/result and [testing guide](docs/test-guide.md); a smaller passing scope does not certify omitted tests.
 
 Cover changed behavior. Repeat/expand checks only for new changes, failures or unresolved concerns. Never weaken security/tenancy for tests.
 

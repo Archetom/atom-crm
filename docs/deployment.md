@@ -4,7 +4,7 @@
 
 ## 构建可发布产物
 
-在后端根目录使用 JDK 25、Maven Wrapper 和可访问的 Docker：
+在后端根目录使用 JDK 27、Maven Wrapper 3.10.0 和可访问的 Docker：
 
 ```bash
 make release-verify
@@ -41,7 +41,11 @@ curl --fail http://127.0.0.1:8080/actuator/health
 
 ## 数据与升级
 
+工程基线升级到 Atom Archetype 2.3.0 后，构建与部署运行时均需要 Java 27，atom-common 为 1.2.0。应用版本仍独立维护；升级时合并经过验证的工程配置，不重新生成或覆盖业务源码、环境配置和已应用迁移。Java 25 运行时无法运行新的构建产物，应先在隔离环境验证 Java 27 镜像与前后端版本对。
+
 Flyway 是唯一建表和升级机制，保留迁移校验与禁用 clean；不要修改已应用迁移。发布前备份 MySQL，并在隔离环境验证恢复与迁移。先对备份副本升级和联调前后端，再安排生产变更。
+
+Java 升级也可能改变 JDK 的时区数据库证据。Work 周期任务的 `atom.work.recurrence.tzdb-fingerprint=AUTO` 会与已持久化的控制行核对；相同策略版本下的 tzdb 不匹配会使该执行通道保持未就绪，阻止激活和物化，普通 Work 请求仍可用。部署前核对各副本的运行时与现有策略/tzdb 控制状态，按已有[周期任务配置契约](configuration.md#scheduled-automation)评估和验证协调过程，并检查 `automationScheduling` readiness。不要假定换 JDK 会自动接受新的指纹，也不要直接改控制表或迁移来绕过检查。
 
 回退应用版本不等于回退数据库。迁移不向后兼容时，需要停写并按已演练的数据库恢复方案回退，同时保留升级后的数据用于核对。文件能力若启用，还需备份并恢复其实际私有存储和数据库关联；仅备份 MySQL 不足以恢复附件。
 
