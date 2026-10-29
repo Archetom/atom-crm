@@ -64,7 +64,7 @@ For one test class in a reactor run, add `-Dtest=<TestClass> -Dsurefire.failIfNo
 
 ## Dependency baseline
 
-The 2026-10-29 audit compares the resolved dependency trees, annotation processors and active Maven plugins with Maven Central release metadata. Use stable releases; exclude snapshots, milestones, release candidates and early-access JDKs. Java's compilation target stays `27`; Maven Enforcer requires at least JDK `27.0.1`, and CI uses Temurin `27.0.1.0.2+1`.
+The 2026-10-29 audit compares the resolved dependency trees, annotation processors and active Maven plugins with Maven Central release metadata. Use stable releases; exclude snapshots, milestones, release candidates and early-access JDKs. Java's compilation target stays `27`; Maven Enforcer requires at least JDK `27.0.1`, and CI uses Temurin `27.0.1.0.2+1`. CI verifies the official JDK archive checksum before passing it to `setup-java` as `jdkfile`, because Adoptium's API currently truncates this CPU release in its version metadata.
 
 | Updated family | Version |
 | --- | --- |
