@@ -12,7 +12,7 @@ Lead and contact lists follow the same current-page selection flow. Permitted us
 
 Opportunity lists expose the same current-page transfer and deletion flow. The replacement owner must be an active member within the caller's resolved assignment scope, while the server validates every selected visible opportunity's version and owner field policy before the first owner change. Deletion preflights the complete selection before withdrawing attachments or governed FILE values. Any failed record rolls back the whole command.
 
-Use this guide when adding application behavior to atom-crm. The dependency and security rules in [architecture](architecture.md) still apply.
+Use this guide when adding application behavior to atom-crm. The dependency and security rules in [architecture](architecture.md) still apply. Read the relevant [task workflow](../llms.txt#task-workflows) on demand; record non-obvious confirmed decisions and open assumptions using [domain contracts](domain/README.md) without duplicating existing feature guides.
 
 ## Local development loop
 
@@ -27,7 +27,7 @@ Build the project, then run the `start` module with the `dev` profile:
 ```bash
 sh ./mvnw clean install
 
-sh ./mvnw -f start/pom.xml spring-boot:run -Dspring-boot.run.profiles=dev
+sh ./mvnw -pl start -am spring-boot:run -Dspring-boot.run.profiles=dev
 ```
 
 Start the matching `atom-crm-web` checkout using its README. On a fresh database, open its `/setup` page to create the first administrator, then use `/login` for ordinary password sessions. Its development server proxies `/api` to the backend, preserving the browser session and CSRF flow. There are no default administrator credentials.
@@ -61,7 +61,7 @@ Queries also validate the caller and tenant before a repository or cache lookup.
 
 ### First additional aggregate: complete checklist
 
-For an `Order` aggregate with one create command and one detail query, inspect or add each applicable item below. The User implementation provides a nearby reference and remains part of installation, authentication and tenant-scoped user management:
+For an `Order` aggregate with one create command and one detail query, inspect each applicable item below and add only what the use case consumes. This is not a requirement to create every DDD object. The User implementation provides a nearby reference and remains part of installation, authentication and tenant-scoped user management:
 
 | Area | Required work |
 | --- | --- |
@@ -222,11 +222,7 @@ Create the next migration in:
 infra/persistence/src/main/resources/db/migration
 ```
 
-Use a versioned name such as:
-
-```text
-V2__add_user_last_login_time.sql
-```
+Inspect the full existing migration sequence and choose the next unused version with a description of the actual CRM schema change. Do not reuse an early sample migration number or replace an applied migration from an archetype reference.
 
 Update the migration, affected PO types, converter mappings, mapper XML, aggregate reconstruction, and tests in the same change. Add a column to an aggregate and `reconstitute` only when it is domain state. JSON columns may store bounded validated metadata such as field options or personal layouts; converters must expose typed domain values instead of raw JSON. A non-transactional Java backfill must detect every completed schema phase and safely resume after `Flyway.repair`; replace keys supporting foreign keys in one atomic `ALTER TABLE`, and test both the preceding-version upgrade and a failed-backfill retry. Freeze historical transformations in the migration itself and give Java migrations a stable checksum; never delegate them to mutable domain policies.
 
@@ -248,11 +244,11 @@ Use stable public errors and the narrowest internal failure type. Unexpected exc
 
 ## Verify the change
 
-Select tests for the affected behavior. For cross-module changes, follow focused tests with the explicit fast suite; for database, security, transaction, mapper, cache or event changes, also run the default suite with Docker available:
+Select tests for the affected behavior. For cross-module changes, follow focused tests with the explicit fast suite; for database, security, transaction, mapper, cache or event changes, run the full gate with Docker available:
 
 ```bash
-sh ./mvnw test -Datom.test.skip-database-tests=true
-sh ./mvnw test
+make agent-check SCOPE=fast
+make agent-check SCOPE=full
 ```
 
-The default suite skips database tests when Docker is unavailable, regardless of `CI=true/false`. Check that the relevant MySQL tests actually ran before claiming integration coverage. See [testing guide](test-guide.md) for test selection and documentation-only checks.
+Direct Maven tests skip database cases when Docker is unavailable, regardless of `CI=true/false`. The full gate requires Docker, explicitly disables skipping, and rejects missing/skipped database reports after `clean install`. See [testing guide](test-guide.md) and [verify-change](../.agents/skills/verify-change/SKILL.md) for scope selection and documentation-only checks.

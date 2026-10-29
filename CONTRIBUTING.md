@@ -17,10 +17,12 @@ Community support has no guaranteed response time. Never post credentials, sessi
 ## Set up and make a change
 
 1. Fork or clone the repository and create a branch for one coherent change. Read [AGENTS.md](AGENTS.md), the applicable architecture rules, and nearby tests.
-2. Use JDK 25 and the checked-in Maven Wrapper. Follow the [quick start](README.en.md#quick-start) to run MySQL, the backend, and the separate frontend. Normal browser use starts at `/setup` and uses password login; development identity headers are optional local test tooling.
+2. Use JDK 27 and the checked-in Maven Wrapper 3.10.0. Follow the [quick start](README.en.md#quick-start) to run MySQL, the backend, and the separate frontend. Normal browser use starts at `/setup` and uses password login; development identity headers are optional local test tooling.
 3. Keep changes within the existing adapter → application → domain boundaries. Follow the [development workflow](docs/usage-guide.md) and [object-layering guide](docs/object-layering.md).
 4. Add regression coverage for changed behavior. Preserve tenant isolation, authorization, optimistic locking, transaction boundaries, and post-commit effects. Add Flyway migrations instead of editing applied migrations.
 5. Update the API/configuration documentation when public behavior changes. For an HTTP contract change, coordinate the frontend OpenAPI snapshot, generated types, and caller tests; do not edit generated frontend types by hand.
+
+Use the relevant [task workflow](llms.txt#task-workflows) when helpful. The Atom Archetype 2.3.0 engineering baseline supplies these workflows and verification tooling; CRM's explicit caller/connector facade contracts, scope exceptions, and feature-specific rules remain defined by this repository.
 
 ## Verify
 
@@ -30,11 +32,11 @@ Run commands from the backend repository root. See the [test guide](docs/test-gu
 | --- | --- |
 | Documentation only | Check links, paths, and commands; run `git diff --check` |
 | Focused behavior | `sh ./mvnw -pl <module> -am test -Datom.test.skip-database-tests=true` |
-| Cross-module contract | Focused tests, then `sh ./mvnw test -Datom.test.skip-database-tests=true` |
-| Database, security, transactions, mapper, cache, or event boundaries | Docker plus `sh ./mvnw test`; confirm the relevant MySQL tests actually ran |
+| Cross-module contract | Focused tests, then `make agent-check SCOPE=fast` |
+| Database, security, transactions, mapper, cache, or event boundaries | `make agent-check SCOPE=full`; requires Docker and verifies database execution reports |
 | Release | `make release-verify` |
 
-For one class, add `-Dtest=<TestClass> -Dsurefire.failIfNoSpecifiedTests=false`. Database tests can be skipped when Docker is unavailable, so a successful Maven run alone is not evidence of database verification. Record any skipped tests or unavailable infrastructure in the pull request.
+For one class, add `-Dtest=<TestClass> -Dsurefire.failIfNoSpecifiedTests=false`. `make agent-check SCOPE=affected` can select conservative checks from Git changes; a passing narrow scope does not replace the full requirements above. Direct Maven tests can skip database cases when Docker is unavailable, and `CI=true/false` does not change that gate. The full entry point disables explicit skipping and checks `VerifyDatabaseTests.java` evidence. Record any skipped tests or unavailable infrastructure in the pull request.
 
 ## Submit a pull request
 

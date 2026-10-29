@@ -4,6 +4,19 @@ Test domain behavior without Spring, application orchestration through ports, ad
 
 ## Commands
 
+Run from the CRM root with JDK 27 and Maven Wrapper 3.10.0. The shared entry point uses this application's database gate:
+
+```bash
+make agent-check SCOPE=docs     # Git whitespace; review facts and links separately.
+make agent-check SCOPE=fast     # Explicitly skip database tests.
+make agent-check SCOPE=affected # Select conservatively from Git changes.
+make agent-check               # Default full: Docker, clean install, database report verification.
+```
+
+`full` reuses the release gate, including its release-metadata checks, and explicitly disables database skipping before checking `scripts/VerifyDatabaseTests.java`. It does not remove application sources. Missing Docker is blocked with a nonzero exit code. JSON on standard output preserves the requested/selected scope, status, exit code, timing and actual report paths; detailed logs go to standard error. Missing or stale reports are not evidence of success. `docs` needs an independent Git root; archetype-only `generate` is not an application scope.
+
+`affected` includes staged, unstaged, untracked, deleted and renamed files. Only recognized documentation or eligible Java test changes in one domain/application module narrow checks. Production/POM/shared/API, cross-module, unknown or sensitive changes select full, including identity, membership, record/field policy, connectors, public forms and durable-worker boundaries. Missing Git history/context, no changes, or an unavailable optional Python 3 selector also selects full. Path selection does not prove semantic safety; use full explicitly when the affected contract requires it.
+
 Run the explicitly fast suite without database tests:
 
 ```bash
@@ -28,7 +41,7 @@ sh ./mvnw test
 
 `DatabaseTestCondition` checks Docker availability unless `atom.test.skip-database-tests=true` explicitly opts out. Without Docker, database tests are skipped; `CI=true/false` does not change this gate. Testcontainers starts MySQL 9.7.1 LTS; Redis remains disabled. For changes requiring database evidence, ensure Docker is usable and inspect the relevant Surefire execution/skip counts; Maven success alone does not prove that those tests ran.
 
-The checked-in GitHub Actions workflow runs `sh scripts/release-verify.sh` (also exposed as `make release-verify`) for every pull request and every push to `main`; it can also be triggered manually. Release verification requires a working Docker daemon, checks release metadata, runs a clean Maven install, and inspects the resulting Surefire XML. Every database test class discovered from `@RequiresDatabase` or `BaseIntegrationTest` must have executed cases with no skips, errors or failures; missing reports also fail the release gate. Local `make test` and `make integration-test` retain the automatic Docker gate; use the explicit skip property above for a fast run.
+The checked-in GitHub Actions workflow runs `make agent-check SCOPE=full` for every pull request and every push to `main`; it can also be triggered manually. This runs the existing `scripts/release-verify.sh` gate (also available as `make release-verify`) once; the full build includes fast tests without a separate duplicate fast invocation. Release verification requires a working Docker daemon, checks release metadata, runs a clean Maven install, and inspects the resulting Surefire XML. Every database test class discovered from `@RequiresDatabase` or `BaseIntegrationTest` must have executed cases with no skips, errors or failures; missing reports also fail the gate. Local `make test` explicitly skips database tests; direct Maven `test` retains the automatic Docker gate.
 
 CI sets `ATOM_TEST_FORKS=2` to run the `start` module in two reused Surefire JVMs, each with a 2 GiB heap limit, its own MySQL containers and Spring context cache. Tests within each JVM stay sequential because they share the application schema. Local runs default to one JVM; reproduce CI with `ATOM_TEST_FORKS=2 make release-verify`, or use `-Datom.test.forks=2` for a direct Maven run. Other modules retain their existing execution settings.
 
@@ -38,7 +51,7 @@ Both test servers put their disposable MySQL data directories on `tmpfs`, capped
 
 The Maven launcher uses a 4 MiB thread stack from `.mvn/jvm.config` to give the in-process Java compiler headroom after a `StackOverflowError` observed while compiling the REST module in CI. This setting does not change the deployed application's JVM options.
 
-The report verifier uses the existing JDK 25 source launcher and needs no additional runtime. Its fixture self-tests cover missing/empty reports, partial and complete skips, failures, parameterized/dynamic and nested cases, and malformed or unsafe XML:
+The report verifier uses the existing JDK 27 source launcher and needs no additional runtime. Its fixture self-tests cover missing/empty reports, partial and complete skips, failures, parameterized/dynamic and nested cases, and malformed or unsafe XML:
 
 ```bash
 java scripts/VerifyDatabaseTests.java --self-test
@@ -62,6 +75,8 @@ For one test class in a reactor run, add `-Dtest=<TestClass> -Dsurefire.failIfNo
 | Architecture | Forbidden dependencies, adapter bypasses, entity setters, naming | ArchUnit bytecode inspection and Maven Enforcer |
 
 Use the lowest layer that proves the behavior.
+
+Static checks such as `ArchitectureBoundaryTest` and `RepositoryPortTenantScopeTest` protect dependency and port contracts; they do not establish runtime authorization, SQL isolation, or commit ordering. Preserve their CRM-specific identity/streaming exceptions and use the runtime tests below for affected behavior. Non-obvious business decisions can be recorded using the optional [domain-contract guide](domain/README.md).
 
 ## Representative tests
 

@@ -46,7 +46,7 @@ Readiness is per operation, current adapter build and private binding revision. 
 
 ## Verification
 
-Use the [testing guide](test-guide.md) for JDK 25, Maven and Docker requirements. Relevant boundaries are covered by `ConnectorGuardTest`, `ConnectorAuthenticationServiceTest`, `CallFactInboxServiceImplTest` and `ConnectorIntegrationTest`.
+Use the [testing guide](test-guide.md) for JDK 27, Maven and Docker requirements. Relevant boundaries are covered by `ConnectorGuardTest`, `ConnectorAuthenticationServiceTest`, `CallFactInboxServiceImplTest` and `ConnectorIntegrationTest`.
 
 The maintained entry points are:
 
