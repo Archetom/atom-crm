@@ -1,6 +1,7 @@
 package io.github.archetom.crm;
 
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
@@ -12,9 +13,21 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
  */
 class DatabaseTestConditionTest {
 
+    private String originalSkipProperty;
+
+    @BeforeEach
+    void rememberSkipProperty() {
+        originalSkipProperty = System.getProperty(DatabaseTestCondition.SKIP_PROPERTY);
+    }
+
     @AfterEach
-    void clearSkipProperty() {
-        System.clearProperty(DatabaseTestCondition.SKIP_PROPERTY);
+    void restoreSkipProperty() {
+        // A fast run supplies this property to the whole JVM, not only this test class.
+        if (originalSkipProperty == null) {
+            System.clearProperty(DatabaseTestCondition.SKIP_PROPERTY);
+        } else {
+            System.setProperty(DatabaseTestCondition.SKIP_PROPERTY, originalSkipProperty);
+        }
     }
 
     @Test

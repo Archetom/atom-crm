@@ -14,7 +14,7 @@ import org.w3c.dom.Node;
 import org.xml.sax.SAXParseException;
 import org.xml.sax.helpers.DefaultHandler;
 
-/** Run with JDK 25: java scripts/VerifyDatabaseTests.java [--self-test]. */
+/** Run with JDK 27: java scripts/VerifyDatabaseTests.java [--self-test]. */
 class VerifyDatabaseTests {
     private static final Pattern DATABASE_TEST = Pattern.compile(
             "@RequiresDatabase\\b|extends\\s+BaseIntegrationTest\\b");

@@ -1,6 +1,6 @@
 # atom-crm
 
-基于 Java 25 和 Spring Boot 4.1 的开源 CRM 后端，采用领域驱动设计与多模块架构。
+基于 Java 27 和 Spring Boot 4.1.2 的开源 CRM 后端，采用领域驱动设计与多模块架构。
 
 [English](README.en.md) · [快速开始](#快速开始) · [文档](#文档) · [Web 前端](https://github.com/Archetom/atom-crm-web)
 
@@ -18,9 +18,9 @@
 
 ### 环境要求
 
-- JDK 25
+- JDK 27（非 LTS；构建与运行均需要）
 - Docker 与 Docker Compose
-- Maven Wrapper 已随仓库提供，无需单独安装 Maven。Redis 可选，默认关闭。
+- Maven Wrapper 3.10.0 已随仓库提供，无需单独安装 Maven。Redis 可选，默认关闭。
 
 ### 启动后端
 
@@ -29,7 +29,7 @@ git clone https://github.com/Archetom/atom-crm.git
 cd atom-crm
 docker compose up -d mysql
 sh ./mvnw clean install
-sh ./mvnw -f start/pom.xml spring-boot:run -Dspring-boot.run.profiles=dev
+sh ./mvnw -pl start -am spring-boot:run -Dspring-boot.run.profiles=dev
 ```
 
 启动后可访问[健康检查](http://localhost:8080/actuator/health)和 [Swagger UI](http://localhost:8080/swagger-ui/index.html)。开发配置位于 [`conf/application-dev.yml`](conf/application-dev.yml)。
@@ -51,12 +51,15 @@ pnpm dev
 
 ## 开发与测试
 
+工程基线已合并 Atom Archetype 2.3.0，使用 atom-common 1.2.0；CRM 的业务模块、身份与授权契约及数据库迁移历史保持独立维护。开发规则见 [AGENTS.md](AGENTS.md)，五个按需使用的工作流见[任务索引](llms.txt#task-workflows)。
+
 ```bash
-sh ./mvnw test                                        # Docker 可用时包含 MySQL 集成测试
-sh ./mvnw test -Datom.test.skip-database-tests=true    # 显式跳过数据库测试
+make agent-check SCOPE=fast       # 显式跳过数据库测试
+make agent-check SCOPE=affected   # 根据 Git 变更保守选择范围
+make agent-check                 # 默认 full，要求 Docker 和完整数据库测试证据
 ```
 
-Docker 不可用时数据库测试会跳过；完整验证方式见[测试指南](docs/test-guide.md)。
+验证入口输出 JSON，详细日志写到标准错误；缺少必需的 Docker 会返回阻塞和非零退出码。直接运行 `sh ./mvnw test` 仍会在 Docker 不可用时跳过数据库测试；`CI=true/false` 不控制该行为，只有 `-Datom.test.skip-database-tests=true` 显式跳过。快速测试成功不代表数据库验证通过，完整说明见[测试指南](docs/test-guide.md)。
 
 ## 文档
 
@@ -68,6 +71,7 @@ Docker 不可用时数据库测试会跳过；完整验证方式见[测试指南
 | [架构设计](docs/architecture.md) | 模块职责、领域模型与事务边界 |
 | [开发指南](docs/usage-guide.md) | 新增用例、接口与数据库迁移 |
 | [测试指南](docs/test-guide.md) | 测试分层与验证命令 |
+| [领域契约指南](docs/domain/README.md) | 按需记录业务事实、待确认假设与可执行约束 |
 
 [变更记录](CHANGELOG.md) · [1.0.0 部署与发布](docs/deployment.md) · [完整文档索引](llms.txt)
 
