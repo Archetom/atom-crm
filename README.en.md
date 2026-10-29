@@ -18,7 +18,7 @@ This repository provides the backend API. The browser application lives in [atom
 
 ### Requirements
 
-- JDK 27 (non-LTS; required for both build and runtime)
+- JDK 27.0.1 or a newer Java 27 patch (non-LTS; CI and containers use Temurin 27.0.1.0.2+1)
 - Docker and Docker Compose
 - Maven Wrapper 3.10.0 is included; no separate Maven installation is needed. Redis is optional and disabled by default.
 

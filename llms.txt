@@ -1,6 +1,6 @@
 # atom-crm
 
-> Java 27 / Spring Boot 4.1.2 multi-module CRM; Maven coordinates `io.github.archetom:atom-crm:1.0.0`. Engineering baseline: Atom Archetype 2.3.0, Maven Wrapper 3.10.0, atom-common 1.2.0.
+> Java 27 (minimum JDK 27.0.1; CI/runtime Temurin 27.0.1.0.2+1) / Spring Boot 4.1.2 multi-module CRM; Maven coordinates `io.github.archetom:atom-crm:1.0.0`. Engineering baseline: Atom Archetype 2.3.0, Maven Wrapper 3.10.0, atom-common 1.2.0.
 
 Use the current guides below, then inspect the relevant implementation and tests with `rg`.
 

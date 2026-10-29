@@ -13,6 +13,8 @@ User-visible changes are recorded here. A section in this file is not proof that
 
 ### Changed
 
+- Refresh stable dependencies as of 2026-10-29: Temurin 27.0.1.0.2+1 in CI/runtime, MyBatis-Plus 3.5.18.1, Log4j 2.26.1, Prometheus client 1.10.0 and current transitive utility/test libraries. Keep Maven 3.10.0 and Spring Boot 4.1.2, already latest stable, and retain MyBatis 3.5.19 because 3.6.0 removes APIs required by MyBatis-Plus.
+- Require JDK 27.0.1 or newer for builds, verify runtime JRE archive checksums, and update development/test services to MySQL 26.10.0 Innovation and Redis 8.10.3. See the [upgrade guidance](docs/deployment.md#数据与升级) before changing existing database volumes.
 - Align engineering tooling with Atom Archetype 2.3.0 while retaining CRM business modules, human/connector identity contracts, and database migration history.
 - **Breaking toolchain change:** require Java 27 for builds and runtime, Maven 3.10.0, and atom-common 1.2.0. Spring Boot remains on 4.1.2; application versioning remains independent of the archetype.
 - Run the development application from the Maven reactor so dependent modules are rebuilt from current sources.

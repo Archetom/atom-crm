@@ -1,6 +1,6 @@
 services:
   mysql:
-    image: mysql:9.7.1
+    image: mysql:26.10.0
     container_name: atom-crm-mysql
     restart: unless-stopped
     environment:
@@ -16,7 +16,7 @@ services:
       - atom-crm-network
 
   redis:
-    image: redis:8.8.0-alpine
+    image: redis:8.10.3-alpine
     container_name: atom-crm-redis
     restart: unless-stopped
     ports:

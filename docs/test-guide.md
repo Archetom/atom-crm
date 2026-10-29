@@ -4,7 +4,7 @@ Test domain behavior without Spring, application orchestration through ports, ad
 
 ## Commands
 
-Run from the CRM root with JDK 27 and Maven Wrapper 3.10.0. The shared entry point uses this application's database gate:
+Run from the CRM root with JDK 27.0.1 or newer and Maven Wrapper 3.10.0. The shared entry point uses this application's database gate:
 
 ```bash
 make agent-check SCOPE=docs     # Git whitespace; review facts and links separately.
@@ -39,7 +39,7 @@ Run the default suite, including MySQL integration tests when Docker is usable:
 sh ./mvnw test
 ```
 
-`DatabaseTestCondition` checks Docker availability unless `atom.test.skip-database-tests=true` explicitly opts out. Without Docker, database tests are skipped; `CI=true/false` does not change this gate. Testcontainers starts MySQL 9.7.1 LTS; Redis remains disabled. For changes requiring database evidence, ensure Docker is usable and inspect the relevant Surefire execution/skip counts; Maven success alone does not prove that those tests ran.
+`DatabaseTestCondition` checks Docker availability unless `atom.test.skip-database-tests=true` explicitly opts out. Without Docker, database tests are skipped; `CI=true/false` does not change this gate. Testcontainers starts MySQL 26.10.0 Innovation; Redis remains disabled. For changes requiring database evidence, ensure Docker is usable and inspect the relevant Surefire execution/skip counts; Maven success alone does not prove that those tests ran.
 
 The checked-in GitHub Actions workflow runs `make agent-check SCOPE=full` for every pull request and every push to `main`; it can also be triggered manually. This runs the existing `scripts/release-verify.sh` gate (also available as `make release-verify`) once; the full build includes fast tests without a separate duplicate fast invocation. Release verification requires a working Docker daemon, checks release metadata, runs a clean Maven install, and inspects the resulting Surefire XML. Every database test class discovered from `@RequiresDatabase` or `BaseIntegrationTest` must have executed cases with no skips, errors or failures; missing reports also fail the gate. Local `make test` explicitly skips database tests; direct Maven `test` retains the automatic Docker gate.
 
@@ -61,6 +61,27 @@ java scripts/VerifyDatabaseTests.java  # inspect the latest start/target/surefir
 Use the second command only after a complete test run; the release script's `clean install` prevents stale reports from supplying evidence. CI retains Surefire reports for 14 days, including failed runs. Review the relevant report when diagnosing a failure; workflow success requires the database gate to pass.
 
 For one test class in a reactor run, add `-Dtest=<TestClass> -Dsurefire.failIfNoSpecifiedTests=false` so dependency modules without that class do not fail selection. Add regression coverage for changed behavior at the lowest useful layer. Documentation/instruction-only edits need link, command and diff checks rather than a Maven build. Once appropriate checks pass, repeat or broaden them only for a new change, failure or unresolved concern.
+
+## Dependency baseline
+
+The 2026-10-29 audit compares the resolved dependency trees, annotation processors and active Maven plugins with Maven Central release metadata. Use stable releases; exclude snapshots, milestones, release candidates and early-access JDKs. Java's compilation target stays `27`; Maven Enforcer requires at least JDK `27.0.1`, and CI uses Temurin `27.0.1.0.2+1`. CI verifies the official JDK archive checksum before passing it to `setup-java` as `jdkfile`, because Adoptium's API currently truncates this CPU release in its version metadata.
+
+| Updated family | Version |
+| --- | --- |
+| MyBatis-Plus | 3.5.18.1 |
+| Log4j 2 | 2.26.1 |
+| Prometheus Java client | 1.10.0 |
+| ClassMate | 1.8.0 |
+| Commons Codec / Logging / IO | 1.23.0 / 1.4.0 / 2.22.0 |
+| ASM / Objenesis | 9.11.1 / 3.6 |
+| JetBrains annotations / JNA | 26.1.0 / 5.19.1 |
+| MySQL server / Redis | 26.10.0 Innovation / 8.10.3 |
+
+Maven `3.10.0`, Wrapper `3.3.4`, Spring Boot `4.1.2`, atom-common `1.2.0`, the remaining resolved libraries, annotation processors, active build plugins and pinned GitHub Actions already match the latest stable releases at that date. Library families managed by Spring Boot are overridden through their BOM properties; other transitive overrides live in the root dependency management so every module resolves consistently.
+
+**Compatibility exception:** retain MyBatis `3.5.19`, as required by the [MyBatis-Plus 3.5.18.1 POM](https://repo.maven.apache.org/maven2/com/baomidou/mybatis-plus-core/3.5.18.1/mybatis-plus-core-3.5.18.1.pom). MyBatis `3.6.0` removes `org.apache.ibatis.util.MapUtil`, which `MybatisMapperProxy.cachedInvoker()` still calls. A minimal mapper invocation succeeds with `3.5.19` and fails with `NoClassDefFoundError` on `3.6.0`; upgrading that transitive dependency alone breaks mapper execution. Recheck this exception when MyBatis-Plus adds support.
+
+The runtime image installs the [Temurin CPU release](https://github.com/adoptium/temurin27-binaries/releases/tag/jdk-27.0.1.0.2%2B1) from the official archive, with separate pinned SHA-256 checksums for Linux amd64 and arm64. At audit time the upstream `27-jre` image still contains `27+35`. Updating a mutable major tag alone does not prove the runtime patch; inspect `docker run --rm --entrypoint java atom-crm:local --version` after building.
 
 ## Test layers
 
