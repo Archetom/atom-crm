@@ -1,6 +1,6 @@
 # AGENTS.md
 
-Java 27 / Spring Boot 4.1.2 CRM, with Maven Wrapper 3.10.0 and atom-common 1.2.0. Engineering tooling follows Atom Archetype 2.3.0; this guide owns the CRM-specific contracts. Complete and verify changes within these boundaries.
+Java 27 (minimum JDK 27.0.1; CI/runtime Temurin 27.0.1.0.2+1) / Spring Boot 4.1.2 CRM, with Maven Wrapper 3.10.0 and atom-common 1.2.0. Engineering tooling follows Atom Archetype 2.3.0; this guide owns the CRM-specific contracts. Complete and verify changes within these boundaries.
 
 ## Execution and context
 
@@ -56,7 +56,7 @@ Java 27 / Spring Boot 4.1.2 CRM, with Maven Wrapper 3.10.0 and atom-common 1.2.0
 
 ## Verification and completion
 
-Run from the root with JDK 27/Maven Wrapper 3.10.0:
+Run from the root with JDK 27.0.1 or newer/Maven Wrapper 3.10.0:
 
 | Change / purpose | Verification |
 | --- | --- |

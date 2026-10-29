@@ -4,7 +4,7 @@
 
 ## 构建可发布产物
 
-在后端根目录使用 JDK 27、Maven Wrapper 3.10.0 和可访问的 Docker：
+在后端根目录使用 JDK 27.0.1 或更新补丁、Maven Wrapper 3.10.0 和可访问的 Docker：
 
 ```bash
 make release-verify
@@ -44,6 +44,8 @@ curl --fail http://127.0.0.1:8080/actuator/health
 工程基线升级到 Atom Archetype 2.3.0 后，构建与部署运行时均需要 Java 27，atom-common 为 1.2.0。应用版本仍独立维护；升级时合并经过验证的工程配置，不重新生成或覆盖业务源码、环境配置和已应用迁移。Java 25 运行时无法运行新的构建产物，应先在隔离环境验证 Java 27 镜像与前后端版本对。
 
 Flyway 是唯一建表和升级机制，保留迁移校验与禁用 clean；不要修改已应用迁移。发布前备份 MySQL，并在隔离环境验证恢复与迁移。先对备份副本升级和联调前后端，再安排生产变更。
+
+当前 Compose 与集成测试使用 MySQL 26.10.0 Innovation，Redis 为 8.10.3。MySQL 从原 9.7 LTS 系列切换到 Innovation 系列；已有数据卷的服务器升级需要按上述备份、恢复和迁移流程验证，不能将新建测试库的通过视为既有生产数据卷已升级。Java 构建最低补丁为 27.0.1，CI 与容器固定使用 Temurin 27.0.1.0.2+1；依赖版本及 MyBatis 兼容性例外见[依赖基线](test-guide.md#dependency-baseline)。
 
 Java 升级也可能改变 JDK 的时区数据库证据。Work 周期任务的 `atom.work.recurrence.tzdb-fingerprint=AUTO` 会与已持久化的控制行核对；相同策略版本下的 tzdb 不匹配会使该执行通道保持未就绪，阻止激活和物化，普通 Work 请求仍可用。部署前核对各副本的运行时与现有策略/tzdb 控制状态，按已有[周期任务配置契约](configuration.md#scheduled-automation)评估和验证协调过程，并检查 `automationScheduling` readiness。不要假定换 JDK 会自动接受新的指纹，也不要直接改控制表或迁移来绕过检查。
 

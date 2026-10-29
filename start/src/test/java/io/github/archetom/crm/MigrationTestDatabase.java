@@ -126,7 +126,7 @@ final class MigrationTestDatabase implements AutoCloseable {
         private static final MySQLContainer MYSQL = start();
 
         private static MySQLContainer start() {
-            MySQLContainer mysql = new MySQLContainer(DockerImageName.parse("mysql:9.7.1"))
+            MySQLContainer mysql = new MySQLContainer(DockerImageName.parse("mysql:26.10.0"))
                     .withDatabaseName("migrationcontrol")
                     .withUsername("root")
                     .withPassword(UUID.randomUUID().toString().replace("-", ""))

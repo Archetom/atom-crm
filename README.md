@@ -18,7 +18,7 @@
 
 ### 环境要求
 
-- JDK 27（非 LTS；构建与运行均需要）
+- JDK 27.0.1 或更新的 Java 27 补丁（非 LTS；CI 与容器使用 Temurin 27.0.1.0.2+1）
 - Docker 与 Docker Compose
 - Maven Wrapper 3.10.0 已随仓库提供，无需单独安装 Maven。Redis 可选，默认关闭。
 

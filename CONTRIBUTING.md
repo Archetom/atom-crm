@@ -17,7 +17,7 @@ Community support has no guaranteed response time. Never post credentials, sessi
 ## Set up and make a change
 
 1. Fork or clone the repository and create a branch for one coherent change. Read [AGENTS.md](AGENTS.md), the applicable architecture rules, and nearby tests.
-2. Use JDK 27 and the checked-in Maven Wrapper 3.10.0. Follow the [quick start](README.en.md#quick-start) to run MySQL, the backend, and the separate frontend. Normal browser use starts at `/setup` and uses password login; development identity headers are optional local test tooling.
+2. Use JDK 27.0.1 or newer and the checked-in Maven Wrapper 3.10.0. Follow the [quick start](README.en.md#quick-start) to run MySQL, the backend, and the separate frontend. Normal browser use starts at `/setup` and uses password login; development identity headers are optional local test tooling.
 3. Keep changes within the existing adapter → application → domain boundaries. Follow the [development workflow](docs/usage-guide.md) and [object-layering guide](docs/object-layering.md).
 4. Add regression coverage for changed behavior. Preserve tenant isolation, authorization, optimistic locking, transaction boundaries, and post-commit effects. Add Flyway migrations instead of editing applied migrations.
 5. Update the API/configuration documentation when public behavior changes. For an HTTP contract change, coordinate the frontend OpenAPI snapshot, generated types, and caller tests; do not edit generated frontend types by hand.
