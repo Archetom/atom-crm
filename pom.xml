@@ -110,7 +110,7 @@
 
         <!-- Google libraries shared by atom-common and protobuf; pinned for dependency convergence. -->
         <guava.version>33.7.2-jre</guava.version>
-        <error-prone-annotations.version>2.51.0</error-prone-annotations.version>
+        <error-prone-annotations.version>2.52.0</error-prone-annotations.version>
     </properties>
 
     <!-- The root POM owns dependency versions; each module declares what it uses directly. -->
