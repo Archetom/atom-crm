@@ -105,7 +105,7 @@
         <archunit.version>1.5.1</archunit.version>
 
         <!-- SpringDoc -->
-        <springdoc.version>3.2.0</springdoc.version>
+        <springdoc.version>3.2.1</springdoc.version>
         <swagger.annotations.version>2.2.55</swagger.annotations.version>
 
         <!-- Google libraries shared by atom-common and protobuf; pinned for dependency convergence. -->
